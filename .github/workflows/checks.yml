@@ -56,6 +56,7 @@ jobs:
         run: uv sync --locked --all-extras --dev
 
       - name: Camoufox Cache
+        id: cache-camoufox
         uses: actions/cache@v4
         with:
           path: ~/.cache/camoufox
@@ -63,7 +64,9 @@ jobs:
           restore-keys: |
             camoufox-${{ runner.os }}-${{ matrix.python-version }}-
 
-      - name: Camoufox Setup
+      - if: ${{ steps.cache-camoufox.outputs.cache-hit != 'true' }}
+        name: Camoufox Setup
+        continue-on-error: true
         run: uv run camoufox fetch
 
       - name: PyTest
