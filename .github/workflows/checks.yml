@@ -32,7 +32,7 @@ jobs:
         run: uv sync --locked --all-extras --dev
 
       - name: Setup Camoufox
-        run: camoufox fetch
+        run: uv run camoufox fetch
 
       - name: Ruff
         run: uv run ruff check --config=pyproject.toml .
