@@ -44,3 +44,12 @@ update-deps:
 .PHONY: inspect
 inspect:
 	npx @modelcontextprotocol/inspector --config $(CURDIR)/inspector.conf.json
+
+
+.PHONY: clean
+clean:
+	rm -rf $(CURDIR)/dist
+
+.PHONY: build
+build:
+	uv build
