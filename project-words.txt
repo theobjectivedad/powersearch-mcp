@@ -17,6 +17,7 @@ pipefail
 powersearch
 POWERSEARCH
 pycache
+pyproject
 pytest
 safesearch
 scrapling

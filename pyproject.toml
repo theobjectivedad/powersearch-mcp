@@ -61,7 +61,7 @@ strict = true
 ignore_missing_imports = true
 plugins = []
 check_untyped_defs = true
-exclude = ["^tests/"]
+exclude = ["^tests/", "src/powersearch_mcp/_version.py"]
 
 cache_dir = ".mypy_cache"
 
@@ -84,7 +84,7 @@ log_date_format = "%Y-%m-%d %H:%M:%S"
 line-length = 80
 target-version = "py313"
 indent-width = 4
-exclude = ["tests/**"]
+exclude = ["tests/**", "src/powersearch_mcp/_version.py"]
 
 [tool.ruff.lint]
 select = ["ALL"]
