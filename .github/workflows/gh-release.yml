@@ -34,6 +34,9 @@ jobs:
       - name: Create GitHub Release and upload dist/*
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/powersearch_mcp*
+          files: |
+            dist/powersearch_mcp*
+            LICENSE
+          fail_on_unmatched_files: true
           generate_release_notes: true
           make_latest: true
