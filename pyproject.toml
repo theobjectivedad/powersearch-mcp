@@ -1,0 +1,103 @@
+[project]
+name = "powersearch-mcp"
+dynamic = ["version"]
+description = "PowerSearch MCP Server"
+authors = [{ name = "The Objective Dad", email = "theobjectivedad@pm.me" }]
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "camoufox[geoip]>=0.4.11",
+    "curl-cffi>=0.14.0",
+    "mcp[cli]>=1.12.1",
+    "msgspec>=0.20.0",
+    "numpy>=2.4.0",
+    "pydantic>=2.12.5",
+    "pydantic-settings>=2.7.0",
+    "scrapling>=0.3.12",
+    "trafilatura>=2.0.0",
+    "truststore>=0.10.4",
+]
+
+[project.urls]
+Homepage = "https://github.com/theobjectivedad/powersearch-mcp"
+Issues = "https://github.com/theobjectivedad/powersearch-mcp/issues"
+
+[build-system]
+requires = ["hatchling>=1.22", "hatch-vcs>=0.4"]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.build.hooks.vcs]
+version-file = "src/powersearch_mcp/_version.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/powersearch_mcp"]
+
+
+[project.scripts]
+powersearch-mcp = "powersearch_mcp.__main__:main"
+
+
+[dependency-groups]
+dev = [
+    "black>=25.1.0",
+    "mypy>=1.15.0",
+    "pre-commit>=4.2.0",
+    "pytest-cov>=6.1.1",
+    "pytest-asyncio>=1.2.0",
+    "pytest-dotenv>=0.5.2",
+    "pytest-testmon>=2.0.14",
+    "pytest-html>=4.1.1",
+    "pytest-watch>=4.2.0",
+    "pytest>=8.3.5",
+    "ruff>=0.11.4",
+    "pylint>=3.3.9",
+]
+[tool.mypy]
+python_version = "3.13"
+strict = true
+ignore_missing_imports = true
+plugins = []
+check_untyped_defs = true
+exclude = ["^tests/"]
+
+cache_dir = ".mypy_cache"
+
+# Keep this off, doesn't play nice with pre commit hooks on changed files
+# sqlite_cache = true
+
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+env_override_existing_values = 1
+env_files = ".env"
+log_cli = true
+log_cli_level = "INFO"
+log_format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+log_date_format = "%Y-%m-%d %H:%M:%S"
+
+# Ruff configuration
+# https://docs.astral.sh/ruff/configuration/
+[tool.ruff]
+line-length = 80
+target-version = "py313"
+indent-width = 4
+exclude = ["tests/**"]
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = ["PGH003", "D", "COM812", "TD", "EM101", "EM102", "TRY003", "E501"]
+fixable = ["ALL"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+docstring-code-format = true
+
+
+[tool.uv.sources]
+powersearch_mcp = { workspace = true }

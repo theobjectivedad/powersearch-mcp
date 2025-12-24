@@ -1,0 +1,66 @@
+# See https://docs.searxng.org/admin/settings/settings.html#settings-yml for full documentation.
+use_default_settings: true
+
+server:
+  bind_address: "127.0.0.1"
+  port: 8080
+  base_url: "http://localhost:8080/"
+
+  # This is a demo value only, change this to a random string
+  secret_key: "SECRETVALUE"
+
+  public_instance: false
+  image_proxy: false
+  method: "POST"
+  default_http_headers:
+    X-Content-Type-Options: "nosniff"
+    X-Download-Options: "noopen"
+    X-Robots-Tag: "noindex, nofollow"
+    Referrer-Policy: "no-referrer"
+
+general:
+  debug: false
+  instance_name: "SearXNG (local)"
+  privacypolicy_url: false
+  donation_url: false
+  contact_url: false
+  enable_metrics: false
+  open_metrics: ""
+
+search:
+  safe_search: 1
+  autocomplete: ""
+  favicon_resolver: ""
+  default_lang: ""
+  ban_time_on_fail: 5
+  max_ban_time_on_fail: 120
+  suspended_times:
+    SearxEngineAccessDenied: 86400
+    SearxEngineCaptcha: 86400
+    SearxEngineTooManyRequests: 3600
+    cf_SearxEngineCaptcha: 1296000
+    cf_SearxEngineAccessDenied: 86400
+    recaptcha_SearxEngineCaptcha: 604800
+
+  formats:
+    - html
+    - json
+
+ui:
+  default_locale: ""
+  query_in_title: false
+  center_alignment: false
+  cache_url: "https://web.archive.org/web/"
+  default_theme: "simple"
+  theme_args:
+    simple_style: "auto"
+  search_on_category_select: true
+  hotkeys: "default"
+  url_formatting: "pretty"
+outgoing:
+  request_timeout: 4.0
+  max_request_timeout: 15.0
+  useragent_suffix: ""
+  pool_connections: 100
+  pool_maxsize: 10
+  enable_http2: true

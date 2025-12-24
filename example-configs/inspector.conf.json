@@ -1,0 +1,14 @@
+{
+    "mcpServers": {
+        "rfc-writer": {
+            "command": "uv",
+            "args": [
+                "run",
+                "powersearch-mcp",
+                "--server",
+                "--transport",
+                "stdio"
+            ]
+        }
+    }
+}

@@ -1,0 +1,173 @@
+{
+    "folders": [
+        {
+            "path": "."
+        }
+    ],
+    "settings": {
+        "editor.formatOnSave": true,
+        "files.autoSave": "onFocusChange",
+        "problems.sortOrder": "position",
+        "problems.showCurrentInStatus": true,
+        "explorer.autoReveal": false,
+        "editor.minimap.enabled": false,
+        "editor.hover.enabled": "on",
+        "editor.hover.delay": 2000,
+        "editor.hover.hidingDelay": 100,
+        "editor.rulers": [
+            {
+                "column": 80
+            }
+        ],
+        "github.copilot.enable": {
+            "*": false,
+            "plaintext": false,
+            "markdown": true,
+            "scminput": false,
+            "python": true,
+            "yaml": true,
+            "makefile": true,
+            "dockerfile": true
+        },
+        "cSpell.caseSensitive": true,
+        "cSpell.spellCheckOnlyWorkspaceFiles": true,
+        "cSpell.logLevel": "Information",
+        "cSpell.customDictionaries": {
+            "project-words": {
+                "name": "project-words",
+                "path": "${workspaceRoot}/project-words.txt",
+                "description": "Words used in this project",
+                "addWords": true
+            },
+            "custom": true
+        },
+        "cSpell.ignorePaths": [
+            "*.code-workspace",
+            "package-lock.json",
+            "node_modules",
+            "vscode-extension",
+            ".git/{info,lfs,logs,refs,objects}/**",
+            ".git/{index,*refs,*HEAD}",
+            ".vscode",
+            ".vscode-insiders",
+            "pyproject.toml",
+            ".gitignore",
+            ".pre-commit-config.yaml"
+        ],
+        "terminal.integrated.lineHeight": 1,
+        "terminal.integrated.env.linux": {
+            "WORKSPACE_DIR": "${workspaceFolder}",
+            "EDITOR": "vim",
+            "GIT_PAGER": "cat",
+            "GIT_EDITOR": "vim",
+            "PATH": "${workspaceFolder}/bin:${env:PATH}"
+        },
+        "terminal.integrated.env.windows": {
+            "WORKSPACE_DIR": "${workspaceFolder}",
+            "EDITOR": "vim",
+            "GIT_PAGER": "cat",
+            "GIT_EDITOR": "vim",
+            "PATH": "${workspaceFolder}/bin:${env:PATH}"
+        },
+        "terminal.integrated.env.osx": {
+            "WORKSPACE_DIR": "${workspaceFolder}",
+            "EDITOR": "vim",
+            "GIT_PAGER": "cat",
+            "GIT_EDITOR": "vim",
+            "PATH": "${workspaceFolder}/bin:${env:PATH}"
+        },
+        "python.testing.pytestEnabled": true,
+        "python.testing.pytestArgs": [
+            "--import-mode=importlib",
+            "${workspaceFolder}/tests"
+        ],
+        "pylint.enabled": false,
+        "flake8.enabled": false,
+        "ruff.enable": true,
+        "ruff.organizeImports": true,
+        "ruff.showSyntaxErrors": true,
+        "ruff.fixAll": false,
+        "ruff.path": [
+            ".venv/bin/ruff"
+        ],
+        "ruff.exclude": [ ],
+        "ruff.configuration": "pyproject.toml",
+        "mypy-type-checker.ignorePatterns": [ ],
+        "[python]": {
+            "editor.defaultFormatter": "charliermarsh.ruff",
+            "editor.codeActionsOnSave": {
+                "source.fixAll.ruff": "always",
+                "source.organizeImports.ruff": "always",
+                "source.fixAll.markdownlint": "always",
+                "source.convertImportFormat": "never"
+            }
+        },
+        "json.validate.enable": true,
+        "json.format.keepLines": true,
+        "launch": {
+            "configurations": [
+                {
+                    "name": "Python: Debug Tests",
+                    "type": "debugpy",
+                    "request": "launch",
+                    "program": "${file}",
+                    "purpose": [
+                        "debug-test"
+                    ],
+                    "console": "integratedTerminal",
+                    "justMyCode": false
+                },
+                {
+                    "name": "Power Search Agent",
+                    "type": "debugpy",
+                    "request": "launch",
+                    "module": "powersearch_mcp",
+                    "console": "integratedTerminal",
+                    "cwd": "${workspaceFolder}",
+                    "envFile": "${workspaceFolder}/.env",
+                    "justMyCode": false
+                },
+            ],
+            "compounds": [ ]
+        },
+        "github.copilot.chat.agent.thinkingTool": true,
+        "peacock.color": "#024a1c",
+        "workbench.colorCustomizations": {
+            "activityBar.activeBackground": "#603915",
+            "activityBar.background": "#603915",
+            "activityBar.foreground": "#e7e7e7",
+            "activityBar.inactiveForeground": "#e7e7e799",
+            "activityBarBadge.background": "#000000",
+            "activityBarBadge.foreground": "#e7e7e7",
+            "commandCenter.border": "#e7e7e799",
+            "sash.hoverBorder": "#603915",
+            "statusBar.background": "#36200c",
+            "statusBar.foreground": "#e7e7e7",
+            "statusBarItem.hoverBackground": "#603915",
+            "statusBarItem.remoteBackground": "#36200c",
+            "statusBarItem.remoteForeground": "#e7e7e7",
+            "titleBar.activeBackground": "#36200c",
+            "titleBar.activeForeground": "#e7e7e7",
+            "titleBar.inactiveBackground": "#36200c99",
+            "titleBar.inactiveForeground": "#e7e7e799"
+        },
+        "peacock.remoteColor": "#36200c",
+        "github.copilot.chat.useResponsesApi": false,
+        "mcp": { },
+        "extensions": {
+            "recommendations": [
+                "automatalabs.copilot-mcp",
+                "charliermarsh.ruff",
+                "codezombiech.gitignore",
+                "davidanson.vscode-markdownlint",
+                "github.copilot-chat",
+                "github.copilot",
+                "johnpapa.vscode-peacock",
+                "ms-python.mypy-type-checker",
+                "ms-vscode.makefile-tools",
+                "njpwerner.autodocstring",
+                "streetsidesoftware.code-spell-checker",
+            ]
+        }
+    }
+}

@@ -1,0 +1,44 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-yaml
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: check-merge-conflict
+      - id: check-toml
+      - id: debug-statements
+      - id: detect-aws-credentials
+      - id: detect-private-key
+      - id: fix-byte-order-marker
+      # - id: no-commit-to-branch
+      #   args: ["--branch", "master"]
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.14.10
+    hooks:
+      - id: ruff-check
+        args: ["--fix"]
+      - id: ruff-format
+
+  # Local hooks run inside the uv venv
+  - repo: local
+    hooks:
+      - id: pytest-testmon
+        name: pytest (fast)
+        entry: uv run pytest --testmon -q --maxfail=1 --durations=10
+        language: system
+        pass_filenames: false
+        always_run: true
+        require_serial: true
+        stages: [pre-commit]
+        files: '\.(py|toml|ya?ml|json)$'
+      - id: mypy
+        name: mypy (type-check)
+        entry: uv run mypy --config=pyproject.toml --no-incremental --
+        language: system
+        pass_filenames: true
+        files: '\.py$'
+        types: [python]
+        require_serial: true
+        stages: [pre-commit]
