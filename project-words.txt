@@ -8,6 +8,7 @@ duplcheck
 DUPLCHECK
 errexit
 fastmcp
+github
 modelcontextprotocol
 mypy
 noexec

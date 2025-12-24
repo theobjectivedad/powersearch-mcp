@@ -1,10 +1,7 @@
 name: checks
 
 on:
-  pull_request:
-    branches: [master]
-  push:
-    branches: [master]
+  workflow_call:
 
 jobs:
 
