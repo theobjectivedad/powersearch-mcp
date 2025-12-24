@@ -1,7 +1,13 @@
 name: checks
 
 on:
-  workflow_call:
+  pull_request:
+  push:
+    branches:
+      - master
+      - "v*.*.*"
+    tags:
+      - "v*.*.*"
 
 jobs:
 

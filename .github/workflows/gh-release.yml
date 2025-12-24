@@ -1,4 +1,4 @@
-name: release
+name: gh-release
 
 on:
   push:
@@ -28,14 +28,12 @@ jobs:
         with:
           enable-cache: true
 
-      # - name: Install deps (optional; often not needed just to build)
-      #   run: uv sync --locked --all-extras --dev
-
       - name: Build distributions
         run: uv build
 
       - name: Create GitHub Release and upload dist/*
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/*
+          files: dist/powersearch_mcp*
           generate_release_notes: true
+          make_latest: true
