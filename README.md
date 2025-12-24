@@ -9,7 +9,7 @@ PowerSearch is an Internet search & content retrieval MCP server that can bypass
 
 ## Setup
 
-If you haven't already, go ahead and run `make venv` to set up the Python virtual environment and dependencies.
+If you haven't already, go ahead and run `make init` to set up the Python virtual environment and dependencies.
 
 Next, initialize Camoufox:
 
