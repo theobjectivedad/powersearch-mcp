@@ -7,7 +7,7 @@ on:
 
 jobs:
 
-  test:
+  check:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -15,15 +15,18 @@ jobs:
         python-version: ["3.13"]
 
     steps:
-      - uses: actions/checkout@v5
+      - name: Checkout
+        uses: actions/checkout@v5
 
-      - name: "Set up Python"
+      - name: Install Python
         uses: actions/setup-python@v6
         with:
-          python-version-file: ${{ matrix.python-version }}
+          python-version: ${{ matrix.python-version }}
 
       - name: Install uv
         uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
 
       - name: Install the project
         run: uv sync --locked --all-extras --dev
@@ -32,7 +35,7 @@ jobs:
         run: uv run ruff check .
 
       - name: MyPy
-        run: uv run mypy src
+        run: uv run mypy
 
       - name: PyTest
         run: uv run pytest
