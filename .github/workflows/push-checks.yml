@@ -1,0 +1,13 @@
+name: Push Checks
+
+on:
+  push:
+    branches:
+      - master
+      - "v*.*.*"
+    tags:
+      - "v*.*.*"
+
+jobs:
+  checks:
+    uses: ./.github/workflows/checks.yml

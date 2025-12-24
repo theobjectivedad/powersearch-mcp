@@ -8,6 +8,7 @@ duplcheck
 DUPLCHECK
 errexit
 fastmcp
+github
 modelcontextprotocol
 mypy
 noexec
@@ -17,6 +18,7 @@ pipefail
 powersearch
 POWERSEARCH
 pycache
+pyproject
 pytest
 safesearch
 scrapling

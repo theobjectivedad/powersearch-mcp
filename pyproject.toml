@@ -1,9 +1,10 @@
 [project]
 name = "powersearch-mcp"
 dynamic = ["version"]
-description = "PowerSearch MCP Server"
+description = "PowerSearch is an Internet search & content retrieval MCP server that can bypass common bot detection mechanisms, and returns markdown-formatted content optimized for AI agents."
 authors = [{ name = "The Objective Dad", email = "theobjectivedad@pm.me" }]
 readme = "README.md"
+license = { file = "LICENSE" }
 requires-python = ">=3.13"
 dependencies = [
     "camoufox[geoip]>=0.4.11",
@@ -16,6 +17,16 @@ dependencies = [
     "scrapling>=0.3.12",
     "trafilatura>=2.0.0",
     "truststore>=0.10.4",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Internet :: WWW/HTTP :: Indexing/Search",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
 
 [project.urls]
@@ -61,7 +72,7 @@ strict = true
 ignore_missing_imports = true
 plugins = []
 check_untyped_defs = true
-exclude = ["^tests/"]
+exclude = ["^tests/", "src/powersearch_mcp/_version.py"]
 
 cache_dir = ".mypy_cache"
 
@@ -84,7 +95,7 @@ log_date_format = "%Y-%m-%d %H:%M:%S"
 line-length = 80
 target-version = "py313"
 indent-width = 4
-exclude = ["tests/**"]
+exclude = ["tests/**", "src/powersearch_mcp/_version.py"]
 
 [tool.ruff.lint]
 select = ["ALL"]
