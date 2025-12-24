@@ -11,8 +11,8 @@ repos:
       - id: detect-aws-credentials
       - id: detect-private-key
       - id: fix-byte-order-marker
-      # - id: no-commit-to-branch
-      #   args: ["--branch", "master"]
+      - id: no-commit-to-branch
+        args: ["--branch", "master"]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.14.10
