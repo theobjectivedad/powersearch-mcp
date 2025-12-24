@@ -1,6 +1,6 @@
 # Power Search MCP
 
-PowerSearch is an AI agent-friendly Internet search & retrieval MCP server intended for desktop environments. It is capable of running without external API keys, bypassing bot detection, and returning markdown-formatted content to agents. PowerSearch relies on a number of open source technologies, including:
+PowerSearch is an Internet search & content retrieval MCP server that can bypass common bot detection mechanisms, and returns markdown-formatted content optimized for AI agents. PowerSearch relies on a number of open source technologies, including:
 
 - [SearXNG](https://docs.searxng.org/) Meta search engine capable of normalizing scores across many backend search engines and supports returning JSON formatted search results.
 - [Scrapling](https://github.com/D4Vinci/Scrapling) Modern web scraping library.
