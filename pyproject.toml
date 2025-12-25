@@ -46,6 +46,8 @@ version-file = "src/powersearch_mcp/_version.py"
 [tool.hatch.build.targets.wheel]
 packages = ["src/powersearch_mcp"]
 
+[tool.hatch.build.targets.sdist]
+include = ["README.md", "LICENSE", "CONTRIBUTING.md", "SECURITY.md"]
 
 [project.scripts]
 powersearch-mcp = "powersearch_mcp.__main__:main"
@@ -73,12 +75,9 @@ ignore_missing_imports = true
 plugins = []
 check_untyped_defs = true
 exclude = ["^tests/", "src/powersearch_mcp/_version.py"]
-
 cache_dir = ".mypy_cache"
-
 # Keep this off, doesn't play nice with pre commit hooks on changed files
 # sqlite_cache = true
-
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
@@ -108,7 +107,6 @@ indent-style = "space"
 skip-magic-trailing-comma = false
 line-ending = "auto"
 docstring-code-format = true
-
 
 [tool.uv.sources]
 powersearch_mcp = { workspace = true }
