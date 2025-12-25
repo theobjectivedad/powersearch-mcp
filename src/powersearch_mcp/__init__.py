@@ -10,4 +10,4 @@ __all__ = ["__version__"]
 truststore.inject_into_ssl()
 
 
-# Adding a benign change to test the release process.
+# Adding a benign change to test to release 1.0.4

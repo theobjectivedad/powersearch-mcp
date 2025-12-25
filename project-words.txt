@@ -18,6 +18,8 @@ pipefail
 powersearch
 POWERSEARCH
 pycache
+pypa
+pypi
 pyproject
 pytest
 safesearch

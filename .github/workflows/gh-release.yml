@@ -28,7 +28,7 @@ jobs:
         with:
           enable-cache: true
 
-      - name: Build distributions
+      - name: Build
         run: uv build
 
       - name: Create GitHub Release and upload dist/*
