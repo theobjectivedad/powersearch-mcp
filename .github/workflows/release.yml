@@ -1,4 +1,4 @@
-name: publish-pypi
+name: GitHub Release
 
 on:
   push:
@@ -6,14 +6,11 @@ on:
       - "v*.*.*"
 
 permissions:
-  contents: read
-  id-token: write
+  contents: write
 
 jobs:
-  build-and-publish:
+  build-and-release:
     runs-on: ubuntu-latest
-
-    environment: pypi
 
     steps:
       - name: Checkout
@@ -34,11 +31,12 @@ jobs:
       - name: Build
         run: uv build
 
-      # - name: Smoke test (wheel)
-      #   run: uv run --isolated --no-project --with dist/*.whl tests/smoke_test.py
-
-      # - name: Smoke test (source distribution)
-      #   run: uv run --isolated --no-project --with dist/*.tar.gz tests/smoke_test.py
-
-      - name: Publish
-        run: uv publish
+      - name: Create GitHub Release and upload dist/*
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/powersearch_mcp*
+            LICENSE
+          fail_on_unmatched_files: true
+          generate_release_notes: true
+          make_latest: true
