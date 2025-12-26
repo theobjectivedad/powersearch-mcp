@@ -1,8 +1,8 @@
 # Power Search MCP
 
 ![Static analysis checks](https://github.com/theobjectivedad/powersearch-mcp/actions/workflows/checks.yml/badge.svg)
-![Release status](https://github.com/theobjectivedad/powersearch-mcp/actions/workflows/gh-release.yml/badge.svg)
-![PyPi publish](https://github.com/theobjectivedad/powersearch-mcp/actions/workflows/publish-pypi.yml/badge.svg)
+![Release status](https://github.com/theobjectivedad/powersearch-mcp/actions/workflows/release.yml/badge.svg)
+![PyPi publish](https://github.com/theobjectivedad/powersearch-mcp/actions/workflows/publish.yml/badge.svg)
 
 PowerSearch is an Internet search & content retrieval MCP server that can bypass common bot detection mechanisms, and returns markdown-formatted content optimized for AI agents. PowerSearch relies on a number of open source technologies, including:
 
