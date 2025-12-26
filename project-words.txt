@@ -1,5 +1,6 @@
 allexport
 argpartition
+asgi
 ASGI
 autouse
 bing
@@ -36,4 +37,5 @@ trafilatura
 Trafilatura
 truststore
 urlopen
+uvicorn
 venv

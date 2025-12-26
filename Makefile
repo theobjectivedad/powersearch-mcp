@@ -22,12 +22,12 @@ help:
 	@echo "Available targets:"
 	@echo "  build       Build the package into a distributable format"
 	@echo "  clean       Remove build artifacts from previous builds"
-	@echo "  init        Create a new virtual environment in '$(VENV_DIR)'
+	@echo "  init        Create a new virtual environment in '$(VENV_DIR)'"
 	@echo "  inspect     Run the MCP Inspector against the local source code"
 	@echo "  sync        Synchronize the virtual environment with the lockfile"
 	@echo "  test        Runs all pre-commit checks for the entire project"
 	@echo "  update-deps Update all dependencies to their latest versions"
-	@echo "  venv        Alias for the init init target"
+	@echo "  venv        Alias for the init target"
 
 ################################################################################
 # Virtual environment
