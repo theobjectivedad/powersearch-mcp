@@ -1,0 +1,42 @@
+name: GitHub Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Install Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
+      - name: Build
+        run: uv build
+
+      - name: Create GitHub Release and upload dist/*
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/powersearch_mcp*
+            LICENSE
+          fail_on_unmatched_files: true
+          generate_release_notes: true
+          make_latest: true

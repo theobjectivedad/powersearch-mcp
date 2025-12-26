@@ -140,7 +140,7 @@ async def test_search_fetches_and_trims_content(
         assert isinstance(record.content, str)
         assert len(record.content) <= settings.content_limit
 
-    assert any(level == "info" for level, _ in ctx.messages)
+    assert ctx.messages == []
 
 
 @pytest.mark.asyncio
@@ -304,6 +304,27 @@ async def test_search_quick_strategy_uses_snippets(
     results = await search(ctx=ctx, query="query", time_range=None)
 
     assert [r.content for r in results] == ["Snippet One", "Snippet Two"]
+
+
+@pytest.mark.asyncio
+async def test_search_warns_on_zero_results(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    ctx = DummyCtx()
+    settings.content_strategy = "quick"
+
+    stub_response = StubAsyncResponse(payload={"results": []})
+    monkeypatch.setattr(
+        httpx, "AsyncClient", lambda **_: StubAsyncClient(stub_response)
+    )
+
+    results = await search(ctx=ctx, query="query", time_range=None)
+
+    assert results == []
+    assert (
+        "warning",
+        "Search returned zero results",
+    ) in ctx.messages
 
 
 @pytest.mark.asyncio

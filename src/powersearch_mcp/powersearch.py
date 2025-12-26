@@ -1,6 +1,7 @@
 """Core PowerSearch search and fetch logic decoupled from MCP wiring."""
 
 import asyncio
+import logging
 import re
 import time
 from typing import Any, Literal, Protocol
@@ -14,8 +15,19 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from scrapling.fetchers import StealthyFetcher
 from trafilatura.settings import use_config
 
+# Logger level configuration
+for _logger_name in (
+    "httpx",
+    "httpcore",
+    "scrapling",
+    "scrapling.fetchers",
+    "scrapling.fetchers.stealthy_fetcher",
+    "custom",
+):
+    logging.getLogger(_logger_name).setLevel(logging.WARNING)
+
 DEFAULT_BASE_URL: HttpUrl = TypeAdapter(HttpUrl).validate_python(
-    "https://example.com/search"
+    "http://127.0.0.1:9876"
 )
 HTTP_STATUS_OK_MIN = 200
 HTTP_STATUS_OK_MAX = 299
@@ -324,7 +336,9 @@ async def search(  # noqa: C901, PLR0912, PLR0915
 
         searxng_results = response_dict["results"]
 
-        await ctx.info(f"Search returned {len(searxng_results)} raw results")
+        if not searxng_results:
+            await ctx.warning("Search returned zero results")
+            return []
 
         filtered_searxgn_results = _filter_scores_by_percentile(
             searxng_results=searxng_results,
@@ -335,9 +349,9 @@ async def search(  # noqa: C901, PLR0912, PLR0915
             k=settings.filter_top_k,
         )
 
-        await ctx.info(
-            f"Search retained {len(filtered_searxgn_results)} results after processing"
-        )
+        if not filtered_searxgn_results:
+            await ctx.warning("Search returned no results after filtering")
+            return []
 
         search_results = [
             SearchResultRecord(
@@ -347,8 +361,6 @@ async def search(  # noqa: C901, PLR0912, PLR0915
             )
             for x in filtered_searxgn_results
         ]
-
-        await ctx.info(f"Preparing {len(search_results)} results for the agent")
 
         if settings.content_strategy == "fetch":
             time_remaining = settings.timeout_sec - (
@@ -361,7 +373,6 @@ async def search(  # noqa: C901, PLR0912, PLR0915
                 return search_results
 
             fetch_timeout_ms = max(1000, int(time_remaining * 1000))
-            await ctx.info("Fetching page content for retained results")
             fetch_tasks = [
                 _fetch_url(
                     ctx=ctx,
@@ -394,7 +405,6 @@ async def search(  # noqa: C901, PLR0912, PLR0915
                 search_results[i].content = searxgn_result["content"]
 
     if settings.content_limit is not None:
-        await ctx.info("Trimming result content for brevity")
         for result in search_results:
             if len(result.content) > settings.content_limit:
                 result.content = result.content[: settings.content_limit]
@@ -408,10 +418,6 @@ async def _fetch_url(
     fetch_timeout_ms: int,
 ) -> str:
     """Shared implementation for the fetch tool with optional context logging."""
-
-    fetch_started = time.perf_counter()
-    if ctx:
-        await ctx.info(f"Fetching {url}")
 
     try:
         resp = await StealthyFetcher.async_fetch(
@@ -457,7 +463,6 @@ async def _fetch_url(
         "on" if settings.trafilatura_extensive_date_search else "off",
     )
 
-    extraction_started = time.perf_counter()
     markdown_content = trafilatura.extract(
         resp.html_content,
         output_format="markdown",
@@ -471,8 +476,6 @@ async def _fetch_url(
         deduplicate=settings.trafilatura_deduplicate,
         config=config,
     )
-    extraction_elapsed = time.perf_counter() - extraction_started
-
     if not markdown_content:
         if ctx:
             await ctx.error(f"No content extracted from {url}")
@@ -485,14 +488,6 @@ async def _fetch_url(
         "",
         markdown_content,
     )
-
-    fetch_elapsed = time.perf_counter() - fetch_started
-    if ctx:
-        await ctx.info(
-            f"Fetched {url} in {fetch_elapsed:.2f}s (extract {extraction_elapsed:.2f}s); "
-            f"extracted_chars={len(markdown_content)}"
-        )
-
     return markdown_content.strip()
 
 

@@ -3,20 +3,25 @@ name = "powersearch-mcp"
 dynamic = ["version"]
 description = "PowerSearch is an Internet search & content retrieval MCP server that can bypass common bot detection mechanisms, and returns markdown-formatted content optimized for AI agents."
 authors = [{ name = "The Objective Dad", email = "theobjectivedad@pm.me" }]
+keywords = ["mcp", "search", "web", "retrieval", "agents", "scraping"]
 readme = "README.md"
 license = { file = "LICENSE" }
 requires-python = ">=3.13"
 dependencies = [
     "camoufox[geoip]>=0.4.11",
+    "click>=8.3.1",
     "curl-cffi>=0.14.0",
+    "fastmcp>=2.14",
+    "httpx[http2]>=0.28.1",
     "mcp[cli]>=1.12.1",
     "msgspec>=0.20.0",
     "numpy>=2.4.0",
-    "pydantic>=2.12.5",
     "pydantic-settings>=2.7.0",
+    "pydantic>=2.12.5",
     "scrapling>=0.3.12",
     "trafilatura>=2.0.0",
     "truststore>=0.10.4",
+    "uvicorn>=0.40.0",
 ]
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -24,7 +29,9 @@ classifiers = [
     "License :: OSI Approved :: Apache Software License",
     "Natural Language :: English",
     "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3 :: Only",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3",
     "Topic :: Internet :: WWW/HTTP :: Indexing/Search",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
@@ -32,6 +39,8 @@ classifiers = [
 [project.urls]
 Homepage = "https://github.com/theobjectivedad/powersearch-mcp"
 Issues = "https://github.com/theobjectivedad/powersearch-mcp/issues"
+Changelog = "https://github.com/theobjectivedad/powersearch-mcp/releases"
+
 
 [build-system]
 requires = ["hatchling>=1.22", "hatch-vcs>=0.4"]

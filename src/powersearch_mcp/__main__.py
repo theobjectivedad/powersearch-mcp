@@ -1,108 +1,110 @@
-"""MCP server exposing PowerSearch search and fetch tools."""
+"""CLI entrypoint for PowerSearch MCP in stdio or HTTP modes."""
 
-from typing import Annotated
+from __future__ import annotations
 
-from mcp.server.fastmcp import Context, FastMCP
-from mcp.server.session import ServerSessionT
-from mcp.shared.context import LifespanContextT
-from pydantic import Field
+import click
 
-from .powersearch import (
-    SearchResultRecord,
+from .http_server import run_http, run_stdio
+
+DEFAULT_HOST = "127.0.0.1"
+DEFAULT_PORT = 8092
+DEFAULT_LOG_LEVEL = "info"
+
+
+@click.command(context_settings={"auto_envvar_prefix": "POWERSEARCH_HTTP"})
+@click.option(
+    "--transport",
+    type=click.Choice(["stdio", "http"], case_sensitive=False),
+    default="stdio",
+    show_default=True,
+    help="Transport to launch (stdio or HTTP).",
 )
-from .powersearch import (
-    fetch_url as run_fetch_url,
+@click.option(
+    "--host",
+    default=DEFAULT_HOST,
+    show_default=True,
+    help="Host interface for HTTP transport.",
 )
-from .powersearch import (
-    search as run_search,
+@click.option(
+    "--port",
+    type=int,
+    default=DEFAULT_PORT,
+    show_default=True,
+    help="Port for HTTP transport.",
 )
-
-mcp = FastMCP(
-    name="powersearch",
-    instructions=(
-        "Internet search plus page fetch. "
-        "search(query, time_range=day|month|year) returns results with title, url, and "
-        "cleaned markdown content. fetch_url(url, fetch_timeout_ms) fetches a single page "
-        "and returns cleaned markdown. Use for public web lookups; do not expect internal data."
+@click.option(
+    "--log-level",
+    default=DEFAULT_LOG_LEVEL,
+    show_default=True,
+    type=click.Choice(
+        ["critical", "error", "warning", "info", "debug", "trace"],
+        case_sensitive=False,
     ),
+    help="Log level for uvicorn in HTTP mode.",
 )
+@click.option(
+    "--ssl-certfile",
+    type=click.Path(exists=True, dir_okay=False, readable=True),
+    help="PEM-encoded certificate file to enable HTTPS.",
+)
+@click.option(
+    "--ssl-keyfile",
+    type=click.Path(exists=True, dir_okay=False, readable=True),
+    help="PEM-encoded private key file to enable HTTPS.",
+)
+@click.option(
+    "--ssl-keyfile-password",
+    help="Password for the TLS private key, if encrypted.",
+)
+@click.option(
+    "--ssl-ca-certs",
+    type=click.Path(exists=True, dir_okay=False, readable=True),
+    help="Optional CA bundle for client verification.",
+)
+@click.option(
+    "--reload/--no-reload",
+    default=False,
+    show_default=True,
+    help="Enable uvicorn reload (development only).",
+)
+def cli(  # noqa: PLR0913
+    *,
+    transport: str,
+    host: str,
+    port: int,
+    log_level: str,
+    ssl_certfile: str | None,
+    ssl_keyfile: str | None,
+    ssl_keyfile_password: str | None,
+    ssl_ca_certs: str | None,
+    reload: bool,
+) -> None:
+    """Launch PowerSearch MCP over stdio or HTTP."""
 
+    if (ssl_certfile and not ssl_keyfile) or (ssl_keyfile and not ssl_certfile):
+        msg = "Both --ssl-certfile and --ssl-keyfile are required to enable HTTPS."
+        raise click.BadParameter(msg)
 
-@mcp.prompt(title="Internet Search")
-def internet_search_prompt(
-    goal: Annotated[str, Field(description="What you are trying to find")],
-    time_range: Annotated[
-        str | None,
-        Field(
-            default=None,
-            description="Optional recency bias: day, month, or year.",
-        ),
-    ] = None,
-) -> str:
-    """Lightweight prompt for agents to run a web lookup with powersearch tools."""
+    transport_choice = transport.lower()
 
-    recency_hint = (
-        f" Include time_range='{time_range}' if you need recent results."
-        if time_range
-        else ""
-    )
+    if transport_choice == "stdio":
+        run_stdio()
+        return
 
-    return (
-        "You can search the public web via the powersearch MCP server.\n"
-        f"Goal: {goal}\n"
-        f"- Call powersearch/search with the goal as the query.{recency_hint}\n"
-        "- Results include cleaned content; call fetch_url only to refresh a specific URL.\n"
-        "- Summarize briefly and cite URLs; do not invent sources."
-    )
-
-
-@mcp.tool()
-async def search(
-    ctx: Context[ServerSessionT, LifespanContextT],
-    query: Annotated[str, Field(description="Search query string")],
-    time_range: Annotated[
-        str | None,
-        Field(
-            default=None,
-            description=(
-                "Restrict results to a timeframe: day, month, or year. "
-                "Leave empty to search all time."
-            ),
-        ),
-    ] = None,
-) -> list[SearchResultRecord]:
-    """MCP tool wrapper for the core search implementation."""
-
-    return await run_search(ctx=ctx, query=query, time_range=time_range)
-
-
-@mcp.tool()
-async def fetch_url(
-    ctx: Context[ServerSessionT, LifespanContextT],
-    url: Annotated[
-        str, Field(..., description="URL to fetch from the Internet")
-    ],
-    fetch_timeout_ms: Annotated[
-        int,
-        Field(
-            default=10 * 1000,
-            description=(
-                "Per-request timeout in milliseconds applied to the upstream fetch."
-            ),
-        ),
-    ] = 10 * 1000,
-) -> str:
-    """MCP tool wrapper for fetching and cleaning URL content."""
-
-    return await run_fetch_url(
-        ctx=ctx,
-        url=url,
-        fetch_timeout_ms=fetch_timeout_ms,
+    run_http(
+        host=host,
+        port=port,
+        log_level=log_level,
+        ssl_certfile=ssl_certfile,
+        ssl_keyfile=ssl_keyfile,
+        ssl_keyfile_password=ssl_keyfile_password,
+        ssl_ca_certs=ssl_ca_certs,
+        reload=reload,
     )
 
 
 def main() -> None:
-    mcp.run(transport="stdio")
+    cli(standalone_mode=True)
 
 
 if __name__ == "__main__":
