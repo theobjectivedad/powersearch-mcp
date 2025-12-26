@@ -32,6 +32,16 @@ docker run --rm -it \
     searxng/searxng
 ```
 
+## Running the server
+
+PowerSearch still reads runtime configuration from environment variables (or a `.env` file) with the `POWERSEARCH_` prefix. The CLI adds transport selection while keeping that behavior.
+
+- Stdio (default): `powersearch-mcp`
+- HTTP transport: `powersearch-mcp --transport http --host 0.0.0.0 --port 8000 --path /mcp`
+- HTTPS: add `--ssl-certfile path/to/cert.pem --ssl-keyfile path/to/key.pem` (optionally `--ssl-ca-certs` for a custom bundle).
+
+`--host`, `--port`, `--path`, and TLS flags also honor environment variables (`POWERSEARCH_HTTP_HOST`, `POWERSEARCH_HTTP_PORT`, `POWERSEARCH_HTTP_PATH`, `POWERSEARCH_HTTP_SSL_CERTFILE`, `POWERSEARCH_HTTP_SSL_KEYFILE`, `POWERSEARCH_HTTP_SSL_CA_CERTS`, `POWERSEARCH_HTTP_SSL_KEYFILE_PASSWORD`, `POWERSEARCH_HTTP_LOG_LEVEL`). The HTTP app exposes a `/health` endpoint returning a simple JSON payload.
+
 Alternatively, you can always run the search engine in the background:
 
 ```shell

@@ -1418,6 +1418,7 @@ name = "powersearch-mcp"
 source = { editable = "." }
 dependencies = [
     { name = "camoufox", extra = ["geoip"] },
+    { name = "click" },
     { name = "curl-cffi" },
     { name = "mcp", extra = ["cli"] },
     { name = "msgspec" },
@@ -1427,6 +1428,7 @@ dependencies = [
     { name = "scrapling" },
     { name = "trafilatura" },
     { name = "truststore" },
+    { name = "uvicorn" },
 ]
 
 [package.dev-dependencies]
@@ -1448,6 +1450,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "camoufox", extras = ["geoip"], specifier = ">=0.4.11" },
+    { name = "click", specifier = ">=8.3.1" },
     { name = "curl-cffi", specifier = ">=0.14.0" },
     { name = "mcp", extras = ["cli"], specifier = ">=1.12.1" },
     { name = "msgspec", specifier = ">=0.20.0" },
@@ -1457,6 +1460,7 @@ requires-dist = [
     { name = "scrapling", specifier = ">=0.3.12" },
     { name = "trafilatura", specifier = ">=2.0.0" },
     { name = "truststore", specifier = ">=0.10.4" },
+    { name = "uvicorn", specifier = ">=0.40.0" },
 ]
 
 [package.metadata.requires-dev]

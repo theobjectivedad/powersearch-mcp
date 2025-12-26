@@ -5,10 +5,9 @@
             "args": [
                 "run",
                 "powersearch-mcp",
-                "--server",
-                "--transport",
-                "stdio"
+                "--transport=stdio"
             ]
+
         }
     }
 }

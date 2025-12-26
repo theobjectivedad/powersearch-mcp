@@ -42,12 +42,3 @@ jobs:
 
       - name: Publish
         run: uv publish
-
-      # - name: Publish to PyPI
-      #   uses: pypa/gh-action-pypi-publish@release/v1
-      #   with:
-      #     packages-dir: dist
-      #     verify-metadata: true
-      #     print-hash: true
-      #     verbose: true
-      #     attestations: true

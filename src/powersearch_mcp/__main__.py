@@ -1,21 +1,37 @@
-"""MCP server exposing PowerSearch search and fetch tools."""
+"""CLI entrypoint for PowerSearch MCP in stdio or HTTP modes."""
 
-from typing import Annotated
+from __future__ import annotations
 
+import os
+from typing import TYPE_CHECKING, Annotated, cast
+
+import click
+import uvicorn
 from mcp.server.fastmcp import Context, FastMCP
-from mcp.server.session import ServerSessionT
-from mcp.shared.context import LifespanContextT
 from pydantic import Field
+from starlette.responses import JSONResponse
 
-from .powersearch import (
-    SearchResultRecord,
-)
-from .powersearch import (
-    fetch_url as run_fetch_url,
-)
-from .powersearch import (
-    search as run_search,
-)
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from mcp.server.session import ServerSessionT
+    from mcp.shared.context import LifespanContextT
+    from starlette.applications import Starlette
+    from starlette.requests import Request
+else:  # pragma: no cover - runtime aliases for annotation evaluation
+    ServerSessionT = object
+    LifespanContextT = object
+    Starlette = object
+    Request = object
+
+from .powersearch import SearchResultRecord
+from .powersearch import fetch_url as run_fetch_url
+from .powersearch import search as run_search
+
+DEFAULT_HOST = os.getenv("POWERSEARCH_HTTP_HOST", "127.0.0.1")
+DEFAULT_PORT = int(os.getenv("POWERSEARCH_HTTP_PORT", "8000"))
+DEFAULT_PATH = os.getenv("POWERSEARCH_HTTP_PATH", "/mcp")
+DEFAULT_LOG_LEVEL = os.getenv("POWERSEARCH_HTTP_LOG_LEVEL", "info")
 
 mcp = FastMCP(
     name="powersearch",
@@ -101,8 +117,179 @@ async def fetch_url(
     )
 
 
-def main() -> None:
+async def _health_check(_request: Request) -> JSONResponse:
+    return JSONResponse({"status": "healthy", "service": "powersearch-mcp"})
+
+
+health_check = cast(
+    "Callable[[Request], JSONResponse]",
+    mcp.custom_route("/health", methods=["GET"])(_health_check),
+)
+
+
+def _normalize_path(path: str) -> str:
+    """Ensure the HTTP path is rooted and not empty."""
+
+    normalized = (path or "").strip() or "/mcp"
+    if not normalized.startswith("/"):
+        normalized = f"/{normalized}"
+    return normalized.rstrip("/") or "/"
+
+
+def create_http_app(path: str) -> Starlette:
+    """Return an ASGI app for the Streamable HTTP transport."""
+
+    normalized_path = _normalize_path(path)
+    mcp.settings.streamable_http_path = normalized_path
+    return mcp.streamable_http_app()
+
+
+def run_stdio() -> None:
+    """Start the MCP server over stdio (default)."""
+
     mcp.run(transport="stdio")
+
+
+def run_http(  # noqa: PLR0913
+    *,
+    host: str,
+    port: int,
+    path: str,
+    log_level: str,
+    ssl_certfile: str | None,
+    ssl_keyfile: str | None,
+    ssl_keyfile_password: str | None,
+    ssl_ca_certs: str | None,
+    reload: bool,
+) -> None:
+    """Start the MCP server as an ASGI app under uvicorn."""
+
+    app = create_http_app(path)
+
+    uvicorn.run(
+        app,
+        host=host,
+        port=port,
+        log_level=log_level.lower(),
+        ssl_certfile=ssl_certfile,
+        ssl_keyfile=ssl_keyfile,
+        ssl_keyfile_password=ssl_keyfile_password,
+        ssl_ca_certs=ssl_ca_certs,
+        reload=reload,
+    )
+
+
+@click.command()
+@click.option(
+    "--transport",
+    type=click.Choice(["stdio", "http"], case_sensitive=False),
+    default="stdio",
+    show_default=True,
+    help="Transport to launch (stdio or HTTP).",
+)
+@click.option(
+    "--host",
+    default=DEFAULT_HOST,
+    show_default=True,
+    envvar="POWERSEARCH_HTTP_HOST",
+    help="Host interface for HTTP transport.",
+)
+@click.option(
+    "--port",
+    type=int,
+    default=DEFAULT_PORT,
+    show_default=True,
+    envvar="POWERSEARCH_HTTP_PORT",
+    help="Port for HTTP transport.",
+)
+@click.option(
+    "--path",
+    default=DEFAULT_PATH,
+    show_default=True,
+    envvar="POWERSEARCH_HTTP_PATH",
+    help="Request path for the HTTP transport (default /mcp).",
+)
+@click.option(
+    "--log-level",
+    default=DEFAULT_LOG_LEVEL,
+    show_default=True,
+    envvar="POWERSEARCH_HTTP_LOG_LEVEL",
+    type=click.Choice(
+        ["critical", "error", "warning", "info", "debug", "trace"],
+        case_sensitive=False,
+    ),
+    help="Log level for uvicorn in HTTP mode.",
+)
+@click.option(
+    "--ssl-certfile",
+    type=click.Path(exists=True, dir_okay=False, readable=True),
+    envvar="POWERSEARCH_HTTP_SSL_CERTFILE",
+    help="PEM-encoded certificate file to enable HTTPS.",
+)
+@click.option(
+    "--ssl-keyfile",
+    type=click.Path(exists=True, dir_okay=False, readable=True),
+    envvar="POWERSEARCH_HTTP_SSL_KEYFILE",
+    help="PEM-encoded private key file to enable HTTPS.",
+)
+@click.option(
+    "--ssl-keyfile-password",
+    envvar="POWERSEARCH_HTTP_SSL_KEYFILE_PASSWORD",
+    help="Password for the TLS private key, if encrypted.",
+)
+@click.option(
+    "--ssl-ca-certs",
+    type=click.Path(exists=True, dir_okay=False, readable=True),
+    envvar="POWERSEARCH_HTTP_SSL_CA_CERTS",
+    help="Optional CA bundle for client verification.",
+)
+@click.option(
+    "--reload/--no-reload",
+    default=False,
+    show_default=True,
+    envvar="POWERSEARCH_HTTP_RELOAD",
+    help="Enable uvicorn reload (development only).",
+)
+def cli(  # noqa: PLR0913
+    *,
+    transport: str,
+    host: str,
+    port: int,
+    path: str,
+    log_level: str,
+    ssl_certfile: str | None,
+    ssl_keyfile: str | None,
+    ssl_keyfile_password: str | None,
+    ssl_ca_certs: str | None,
+    reload: bool,
+) -> None:
+    """Launch PowerSearch MCP over stdio or HTTP."""
+
+    if (ssl_certfile and not ssl_keyfile) or (ssl_keyfile and not ssl_certfile):
+        msg = "Both --ssl-certfile and --ssl-keyfile are required to enable HTTPS."
+        raise click.BadParameter(msg)
+
+    transport_choice = transport.lower()
+
+    if transport_choice == "stdio":
+        run_stdio()
+        return
+
+    run_http(
+        host=host,
+        port=port,
+        path=path,
+        log_level=log_level,
+        ssl_certfile=ssl_certfile,
+        ssl_keyfile=ssl_keyfile,
+        ssl_keyfile_password=ssl_keyfile_password,
+        ssl_ca_certs=ssl_ca_certs,
+        reload=reload,
+    )
+
+
+def main() -> None:
+    cli(standalone_mode=True)
 
 
 if __name__ == "__main__":

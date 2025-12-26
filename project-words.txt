@@ -1,5 +1,7 @@
 allexport
 argpartition
+ASGI
+autouse
 bing
 camoufox
 Camoufox
@@ -27,6 +29,7 @@ scrapling
 Scrapling
 searxgn
 searxng
+streamable
 testmondata
 tmpfs
 trafilatura

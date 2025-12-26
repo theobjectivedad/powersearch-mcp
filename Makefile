@@ -1,5 +1,5 @@
 ################################################################################
-# Makefile Configuration
+# Configuration
 ################################################################################
 
 .ONESHELL:
@@ -12,16 +12,34 @@ MAKEFLAGS+=--no-print-directory
 WORKSPACE_DIR:=$(CURDIR)
 SRC_DIR:=$(WORKSPACE_DIR)/src
 VENV_DIR:=$(WORKSPACE_DIR)/.venv
-VENV_PYTHON:=$(VENV_DIR)/bin/python
 PYTHON_VERSION:=3.13
 
 .PHONY: default
-default: sync
+default: help
+
+.PHONY: help
+help:
+	@echo "Available targets:"
+	@echo "  build       Build the package into a distributable format"
+	@echo "  clean       Remove build artifacts from previous builds"
+	@echo "  init        Create a new virtual environment in '$(VENV_DIR)'
+	@echo "  inspect     Run the MCP Inspector against the local source code"
+	@echo "  sync        Synchronize the virtual environment with the lockfile"
+	@echo "  test        Runs all pre-commit checks for the entire project"
+	@echo "  update-deps Update all dependencies to their latest versions"
+	@echo "  venv        Alias for the init init target"
+
+################################################################################
+# Virtual environment
+################################################################################
+
+.PHONY: venv
+venv: init
 
 .PHONY: init
 init:
 	if [ -d "$(VENV_DIR)" ]; then \
-		echo "ERROR: Virtual environment '$(VENV_DIR)' already exists, delete it first if you really want to run this target."; \
+		echo "ERROR: Virtual environment '$(VENV_DIR)' already exists."; \
 		exit 1; \
 	fi
 	uv venv \
@@ -34,6 +52,10 @@ init:
 sync:
 	uv pip install --group dev -e $(CURDIR)
 
+################################################################################
+# Project management targets.
+################################################################################
+
 .PHONY: update-deps
 update-deps:
 	uv lock --upgrade
@@ -41,10 +63,22 @@ update-deps:
 	$(MAKE) sync
 	uv run pre-commit autoupdate
 
+################################################################################
+# Local testing & validation targets
+################################################################################
+
 .PHONY: inspect
 inspect:
-	npx @modelcontextprotocol/inspector --config $(CURDIR)/inspector.conf.json
+	npx @modelcontextprotocol/inspector --config $(CURDIR)/example-configs/inspector.conf.json
 
+
+.PHONY: test
+test:
+	uv run pre-commit run --all-files
+
+################################################################################
+# Local package build targets
+################################################################################
 
 .PHONY: clean
 clean:
