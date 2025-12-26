@@ -6,7 +6,23 @@
                 "run",
                 "powersearch-mcp",
                 "--transport=stdio"
-            ]
+            ],
+            "env": {
+                "POWERSEARCH_BASE_URL": "https://searxng.k8s.wm.k8slab",
+                "POWERSEARCH_LANGUAGE": "en",
+                "POWERSEARCH_SAFE_SEARCH": "1",
+                "POWERSEARCH_FILTER_SCORE_PERCENTILE": "0.75",
+                "POWERSEARCH_FILTER_TOP_K": "5",
+                "POWERSEARCH_CONTENT_STRATEGY": "fetch",
+                "POWERSEARCH_CONTENT_LIMIT": "4096",
+                "POWERSEARCH_TIMEOUT_SEC": "10",
+                "POWERSEARCH_HTTP2": "true",
+                "POWERSEARCH_TRAFILATURA_INCLUDE_LINKS": "true",
+                "POWERSEARCH_TRAFILATURA_INCLUDE_IMAGES": "false",
+                "POWERSEARCH_TRAFILATURA_INCLUDE_COMMENTS": "false",
+                "POWERSEARCH_TRAFILATURA_DEDUPLICATE": "true",
+                "POWERSEARCH_TRAFILATURA_FAVOR_PRECISION": "false"
+            }
 
         }
     }

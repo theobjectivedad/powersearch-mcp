@@ -76,6 +76,8 @@ Content strategy matters too. With `fetch`, the tool will fetch each retained UR
 
 PowerSearch reads environment variables with the `POWERSEARCH_` prefix (also respected via a `.env` file). The table below shows when each setting matters.
 
+By design, configuration exists only as environment variables to make using the Power Search tool as simple as possible for AI agents.
+
 ### Search Behavior
 
 | Setting | What it does | When to change |
