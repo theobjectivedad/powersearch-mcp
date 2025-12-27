@@ -1,23 +1,22 @@
 """ASGI app factory and MCP wiring for PowerSearch."""
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING, Annotated
 
-from mcp.server.fastmcp import Context, FastMCP
+from fastmcp.server import Context, FastMCP
+from fastmcp.server.middleware.error_handling import (
+    ErrorHandlingMiddleware,
+    RetryMiddleware,
+)
+from fastmcp.server.middleware.logging import LoggingMiddleware
 from pydantic import Field
 from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import Response
 
 if TYPE_CHECKING:  # pragma: no cover - type checking only
-    from mcp.server.session import ServerSessionT
-    from mcp.shared.context import LifespanContextT
     from starlette.applications import Starlette
     from starlette.requests import Request
     from starlette.types import ASGIApp, Receive, Scope, Send
 else:
-    ServerSessionT = object
-    LifespanContextT = object
     Starlette = object
     Request = object
     ASGIApp = object
@@ -25,9 +24,10 @@ else:
     Scope = object
     Send = object
 
-from .powersearch import SearchResultRecord
-from .powersearch import fetch_url as run_fetch_url
-from .powersearch import search as run_search
+from powersearch_mcp.powersearch import SearchResultRecord
+from powersearch_mcp.powersearch import fetch_url as run_fetch_url
+from powersearch_mcp.powersearch import search as run_search
+from powersearch_mcp.settings import server_settings
 
 mcp = FastMCP(
     name="powersearch",
@@ -37,7 +37,35 @@ mcp = FastMCP(
         "cleaned markdown content. fetch_url(url, fetch_timeout_ms) fetches a single page "
         "and returns cleaned markdown. Use for public web lookups; do not expect internal data."
     ),
-    streamable_http_path="/mcp",
+)
+
+
+mcp.add_middleware(
+    LoggingMiddleware(
+        log_level=server_settings.log_level_value(),
+        include_payloads=server_settings.include_payloads,
+        include_payload_length=server_settings.include_payload_length,
+        estimate_payload_tokens=server_settings.estimate_payload_tokens,
+        max_payload_length=server_settings.max_payload_length,
+    )
+)
+
+
+mcp.add_middleware(
+    ErrorHandlingMiddleware(
+        include_traceback=server_settings.errorhandling_traceback,
+        transform_errors=server_settings.errorhandling_transform,
+    )
+)
+
+
+mcp.add_middleware(
+    RetryMiddleware(
+        max_retries=server_settings.retry_retries,
+        base_delay=server_settings.retry_base_delay,
+        max_delay=server_settings.retry_max_delay,
+        backoff_multiplier=server_settings.retry_backoff_multiplier,
+    )
 )
 
 
@@ -71,7 +99,7 @@ def internet_search_prompt(
 
 @mcp.tool()
 async def search(
-    ctx: Context[ServerSessionT, LifespanContextT],
+    ctx: Context,
     query: Annotated[str, Field(description="Search query string")],
     time_range: Annotated[
         str | None,
@@ -91,7 +119,7 @@ async def search(
 
 @mcp.tool()
 async def fetch_url(
-    ctx: Context[ServerSessionT, LifespanContextT],
+    ctx: Context,
     url: Annotated[
         str, Field(..., description="URL to fetch from the Internet")
     ],
@@ -114,13 +142,14 @@ async def fetch_url(
     )
 
 
-@mcp.custom_route("/health", methods=["GET"])  # type: ignore
+@mcp.custom_route("/health", methods=["GET"])
 async def health_check(_request: Request) -> Response:
     return Response(status_code=200)
 
 
 def create_app() -> Starlette:
-    asgi_app: Starlette = mcp.streamable_http_app()
+    # Use the FastMCP helper to build the Streamable HTTP transport app.
+    asgi_app: Starlette = mcp.http_app(transport="streamable-http")
 
     asgi_app.add_middleware(
         CORSMiddleware,
