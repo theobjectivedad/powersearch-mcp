@@ -1,0 +1,28 @@
+{
+    "$schema": "https://gofastmcp.com/public/schemas/fastmcp.json/v1.json",
+    "source": {
+        "type": "filesystem",
+        "path": "src/powersearch_mcp/app.py",
+        "entrypoint": "mcp"
+    },
+    "environment": {
+        "type": "uv",
+        "project": ".",
+        "editable": [ "." ]
+    },
+    "deployment": {
+        "transport": "stdio",
+        "env": {
+            "POWERSEARCH_BASE_URL": "http://127.0.0.1:9876/search",
+            "POWERSEARCH_LANGUAGE": "en",
+            "POWERSEARCH_SAFE_SEARCH": "1",
+            "POWERSEARCH_FILTER_SCORE_PERCENTILE": "75",
+            "POWERSEARCH_FILTER_TOP_K": "10",
+            "POWERSEARCH_CONTENT_STRATEGY": "fetch",
+            "POWERSEARCH_CONTENT_LIMIT": "4000",
+            "POWERSEARCH_TIMEOUT_SEC": "20",
+            "POWERSEARCH_HTTP2": "false",
+            "FASTMCP_LOG_LEVEL": "INFO"
+        }
+    }
+}
