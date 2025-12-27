@@ -13,7 +13,6 @@
     "deployment": {
         "transport": "stdio",
         "env": {
-            "POWERSEARCH_BASE_URL": "http://127.0.0.1:9876/search",
             "POWERSEARCH_LANGUAGE": "en",
             "POWERSEARCH_SAFE_SEARCH": "1",
             "POWERSEARCH_FILTER_SCORE_PERCENTILE": "75",

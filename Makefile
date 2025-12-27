@@ -71,7 +71,7 @@ update-deps:
 
 .PHONY: inspector
 inspector:
-	npx @modelcontextprotocol/inspector --config $(CURDIR)/example-configs/inspector.conf.json
+	npx @modelcontextprotocol/inspector --config $(CURDIR)/inspector.conf.json --server='PowerSearch MCP (STDIO)'
 
 .PHONY: inspect
 inspect:
@@ -94,7 +94,7 @@ run-stdio:
 
 .PHONY: run-http
 run-http:
-	uv run fastmcp run fastmcp.json --skip-source --skip-env
+	uv run fastmcp run fastmcp-http.json --skip-source --skip-env
 
 ################################################################################
 # Local package build targets

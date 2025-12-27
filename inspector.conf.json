@@ -1,0 +1,26 @@
+{
+    "mcpServers": {
+        "PowerSearch MCP (STDIO)": {
+            "command": "uv",
+            "args": [
+                "run",
+                "fastmcp",
+                "run",
+                "fastmcp.json",
+                "--skip-source",
+                "--skip-env"
+            ]
+        },
+        "PowerSearch MCP (HTTP)": {
+            "command": "uv",
+            "args": [
+                "run",
+                "fastmcp",
+                "run",
+                "fastmcp-http.json",
+                "--skip-source",
+                "--skip-env"
+            ]
+        }
+    }
+}
