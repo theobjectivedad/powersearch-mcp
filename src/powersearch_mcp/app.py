@@ -25,9 +25,9 @@ else:
     Scope = object
     Send = object
 
-from .powersearch import SearchResultRecord
-from .powersearch import fetch_url as run_fetch_url
-from .powersearch import search as run_search
+from powersearch_mcp.powersearch import SearchResultRecord
+from powersearch_mcp.powersearch import fetch_url as run_fetch_url
+from powersearch_mcp.powersearch import search as run_search
 
 mcp = FastMCP(
     name="powersearch",
@@ -37,7 +37,6 @@ mcp = FastMCP(
         "cleaned markdown content. fetch_url(url, fetch_timeout_ms) fetches a single page "
         "and returns cleaned markdown. Use for public web lookups; do not expect internal data."
     ),
-    streamable_http_path="/mcp",
 )
 
 

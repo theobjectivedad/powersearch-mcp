@@ -24,6 +24,8 @@ help:
 	@echo "  clean       Remove build artifacts from previous builds"
 	@echo "  init        Create a new virtual environment in '$(VENV_DIR)'"
 	@echo "  inspect     Run the MCP Inspector against the local source code"
+	@echo "  run-http    Run the application in http mode"
+	@echo "  run-stdio   Run the application in stdio mode"
 	@echo "  sync        Synchronize the virtual environment with the lockfile"
 	@echo "  test        Runs all pre-commit checks for the entire project"
 	@echo "  update-deps Update all dependencies to their latest versions"
@@ -67,14 +69,32 @@ update-deps:
 # Local testing & validation targets
 ################################################################################
 
-.PHONY: inspect
-inspect:
+.PHONY: inspector
+inspector:
 	npx @modelcontextprotocol/inspector --config $(CURDIR)/example-configs/inspector.conf.json
 
+.PHONY: inspect
+inspect:
+	uv run fastmcp inspect fastmcp.json --format=fastmcp --skip-env
 
 .PHONY: test
 test:
 	uv run pre-commit run --all-files
+
+################################################################################
+# Local run targets
+################################################################################
+
+.PHONY: run
+run: run-stdio
+
+.PHONY: run-stdio
+run-stdio:
+	uv run fastmcp run fastmcp.json --skip-source --skip-env
+
+.PHONY: run-http
+run-http:
+	uv run fastmcp run fastmcp.json --skip-source --skip-env
 
 ################################################################################
 # Local package build targets

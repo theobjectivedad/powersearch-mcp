@@ -1,16 +1,17 @@
+from __future__ import annotations
+
 import json
-import logging
 from collections.abc import Iterator
-from typing import Any
+from pathlib import Path
 
 import pytest
-from click.testing import CliRunner
 from starlette.testclient import TestClient
 
-from powersearch_mcp.__main__ import cli
-from powersearch_mcp.app import app, create_app, mcp
-from powersearch_mcp.http_server import run_http
-from powersearch_mcp.powersearch import settings
+from powersearch_mcp.app import create_app
+
+ROOT = Path(__file__).resolve().parents[1]
+STDIO_CONFIG = ROOT / "fastmcp.json"
+HTTP_CONFIG = ROOT / "fastmcp-http.json"
 
 # ruff: noqa: S101, S104, PLR2004
 
@@ -26,78 +27,30 @@ def http_client() -> Iterator[TestClient]:
         yield client
 
 
-def test_cli_runs_stdio(monkeypatch: pytest.MonkeyPatch) -> None:
-    runner = CliRunner()
-    captured: dict[str, Any] = {}
+def test_stdio_config_defaults() -> None:
+    data = json.loads(STDIO_CONFIG.read_text())
 
-    def fake_run(*, transport: str) -> None:
-        captured["transport"] = transport
-
-    monkeypatch.setattr(mcp, "run", fake_run)
-
-    result = runner.invoke(cli, ["--transport", "stdio"])
-
-    assert result.exit_code == 0
-    assert captured["transport"] == "stdio"
-
-
-def test_cli_runs_http_with_overrides(monkeypatch: pytest.MonkeyPatch) -> None:
-    captured: dict[str, Any] = {}
-
-    def fake_uvicorn_run(
-        app: object, host: str, port: int, **kwargs: object
-    ) -> None:
-        captured["app"] = app
-        captured["host"] = host
-        captured["port"] = port
-        captured["kwargs"] = kwargs
-
-    monkeypatch.setattr(
-        "powersearch_mcp.http_server.uvicorn.run", fake_uvicorn_run
-    )
-
-    cli.main(
-        args=[
-            "--transport",
-            "http",
-            "--host",
-            "0.0.0.0",
-            "--port",
-            "9000",
-        ],
-        standalone_mode=False,
-    )
-
-    assert captured["host"] == "0.0.0.0"
-    assert captured["port"] == 9000
-    assert captured["kwargs"]["log_level"] == "info"
-    assert captured["app"] is not None
+    assert data["source"]["path"] == "src/powersearch_mcp/app.py"
+    assert data["source"]["entrypoint"] == "mcp"
+    assert data["deployment"]["transport"] == "stdio"
+    assert data["environment"]["python"] == "3.13"
+    deps = data["environment"]["dependencies"]
+    for required in (
+        "fastmcp>=2.14,<3",
+        "httpx[http2]>=0.28.1,<1",
+        "uvicorn>=0.40.0,<1",
+    ):
+        assert required in deps
 
 
-def test_cli_reads_env_vars(monkeypatch: pytest.MonkeyPatch) -> None:
-    captured: dict[str, Any] = {}
+def test_http_config_defaults() -> None:
+    data = json.loads(HTTP_CONFIG.read_text())
 
-    monkeypatch.setenv("POWERSEARCH_HTTP_HOST", "1.2.3.4")
-    monkeypatch.setenv("POWERSEARCH_HTTP_PORT", "9123")
-    monkeypatch.setenv("POWERSEARCH_HTTP_LOG_LEVEL", "debug")
-
-    def fake_uvicorn_run(
-        app: object, host: str, port: int, **kwargs: object
-    ) -> None:
-        captured["app"] = app
-        captured["host"] = host
-        captured["port"] = port
-        captured["kwargs"] = kwargs
-
-    monkeypatch.setattr(
-        "powersearch_mcp.http_server.uvicorn.run", fake_uvicorn_run
-    )
-
-    cli.main(args=["--transport", "http"], standalone_mode=False)
-    assert captured["host"] == "1.2.3.4"
-    assert captured["port"] == 9123
-    assert captured["kwargs"]["log_level"] == "debug"
-    assert captured["app"] is not None
+    deployment = data["deployment"]
+    assert deployment["transport"] == "streamable-http"
+    assert deployment["host"] == "0.0.0.0"
+    assert deployment["port"] == 8092
+    assert deployment["path"] == "/mcp"
 
 
 def test_health_route_is_exposed(http_client: TestClient) -> None:

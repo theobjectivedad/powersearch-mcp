@@ -48,6 +48,26 @@ Before making any changes to the FastMCP framework, you **MUST** research releva
 
 Only after you complete your research should you make changes to the PowerSearch MCP.
 
+### Task Management
+
+Use the `todo` tool generously to manage your development tasks: planning, implementation, testing, etc.
+
+### Running
+
+To run the PowerSearch MCP server locally, use the following commands:
+
+STDIO transport:
+
+```shell
+uv run fastmcp run fastmcp.json --skip-source --skip-env
+```
+
+Streamable HTTP transport:
+
+```shell
+uv run fastmcp run fastmcp.json --skip-source --skip-env
+```
+
 ### Testing
 
 * New code requires new tests; bug fixes must include a regression test (write it to fail first).
@@ -62,7 +82,7 @@ After making updates and before handing control back to the user, ensure that th
 
 ### Anti-Patterns
 
-* Don't modify code without reading and understanding the entire context.
+* Don't modify code without reading and understanding the entire context + relevant FastMCP documentation.
 * Don't ignore failures or warnings.
 * Don't introduce unjustified optimization or abstraction.
 * Don't overuse broad exceptions.

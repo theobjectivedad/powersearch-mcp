@@ -1846,7 +1846,6 @@ name = "powersearch-mcp"
 source = { editable = "." }
 dependencies = [
     { name = "camoufox", extra = ["geoip"] },
-    { name = "click" },
     { name = "curl-cffi" },
     { name = "fastmcp" },
     { name = "httpx", extra = ["http2"] },
@@ -1880,7 +1879,6 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "camoufox", extras = ["geoip"], specifier = ">=0.4.11,<1" },
-    { name = "click", specifier = ">=8.3.1,<9" },
     { name = "curl-cffi", specifier = ">=0.14.0,<1" },
     { name = "fastmcp", specifier = ">=2.14,<3" },
     { name = "httpx", extras = ["http2"], specifier = ">=0.28.1,<1" },
