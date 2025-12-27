@@ -1879,20 +1879,20 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "camoufox", extras = ["geoip"], specifier = ">=0.4.11" },
-    { name = "click", specifier = ">=8.3.1" },
-    { name = "curl-cffi", specifier = ">=0.14.0" },
-    { name = "fastmcp", specifier = ">=2.14" },
-    { name = "httpx", extras = ["http2"], specifier = ">=0.28.1" },
-    { name = "mcp", extras = ["cli"], specifier = ">=1.12.1" },
-    { name = "msgspec", specifier = ">=0.20.0" },
-    { name = "numpy", specifier = ">=2.4.0" },
-    { name = "pydantic", specifier = ">=2.12.5" },
-    { name = "pydantic-settings", specifier = ">=2.7.0" },
-    { name = "scrapling", specifier = ">=0.3.12" },
-    { name = "trafilatura", specifier = ">=2.0.0" },
-    { name = "truststore", specifier = ">=0.10.4" },
-    { name = "uvicorn", specifier = ">=0.40.0" },
+    { name = "camoufox", extras = ["geoip"], specifier = ">=0.4.11,<1" },
+    { name = "click", specifier = ">=8.3.1,<9" },
+    { name = "curl-cffi", specifier = ">=0.14.0,<1" },
+    { name = "fastmcp", specifier = ">=2.14,<3" },
+    { name = "httpx", extras = ["http2"], specifier = ">=0.28.1,<1" },
+    { name = "mcp", extras = ["cli"], specifier = ">=1.12.1,<2" },
+    { name = "msgspec", specifier = ">=0.20.0,<1" },
+    { name = "numpy", specifier = ">=2.4.0,<3" },
+    { name = "pydantic", specifier = ">=2.12.5,<3" },
+    { name = "pydantic-settings", specifier = ">=2.7.0,<3" },
+    { name = "scrapling", specifier = ">=0.3.12,<1" },
+    { name = "trafilatura", specifier = ">=2.0.0,<3" },
+    { name = "truststore", specifier = ">=0.10.4,<1" },
+    { name = "uvicorn", specifier = ">=0.40.0,<1" },
 ]
 
 [package.metadata.requires-dev]
