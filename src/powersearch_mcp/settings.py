@@ -192,6 +192,34 @@ class ServerSettings(BaseSettings):
         ge=0,
         description="Maximum payload characters to log when payload logging is enabled.",
     )
+    errorhandling_traceback: bool = Field(
+        default=False,
+        description="Include exception tracebacks in error responses.",
+    )
+    errorhandling_transform: bool = Field(
+        default=True,
+        description="Transform exceptions into MCP-friendly error responses.",
+    )
+    retry_retries: int = Field(
+        default=3,
+        ge=0,
+        description="Maximum retry attempts applied by retry middleware.",
+    )
+    retry_base_delay: float = Field(
+        default=1.0,
+        ge=0,
+        description="Initial delay between retries in seconds.",
+    )
+    retry_max_delay: float = Field(
+        default=60.0,
+        ge=0,
+        description="Upper bound on retry delay in seconds.",
+    )
+    retry_backoff_multiplier: float = Field(
+        default=2.0,
+        gt=0,
+        description="Exponential backoff multiplier between retry attempts.",
+    )
 
     @model_validator(mode="after")
     def _apply_log_level_default(self) -> ServerSettings:

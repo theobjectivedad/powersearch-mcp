@@ -3,6 +3,10 @@
 from typing import TYPE_CHECKING, Annotated
 
 from fastmcp.server import Context, FastMCP
+from fastmcp.server.middleware.error_handling import (
+    ErrorHandlingMiddleware,
+    RetryMiddleware,
+)
 from fastmcp.server.middleware.logging import LoggingMiddleware
 from pydantic import Field
 from starlette.middleware.cors import CORSMiddleware
@@ -43,6 +47,24 @@ mcp.add_middleware(
         include_payload_length=server_settings.include_payload_length,
         estimate_payload_tokens=server_settings.estimate_payload_tokens,
         max_payload_length=server_settings.max_payload_length,
+    )
+)
+
+
+mcp.add_middleware(
+    ErrorHandlingMiddleware(
+        include_traceback=server_settings.errorhandling_traceback,
+        transform_errors=server_settings.errorhandling_transform,
+    )
+)
+
+
+mcp.add_middleware(
+    RetryMiddleware(
+        max_retries=server_settings.retry_retries,
+        base_delay=server_settings.retry_base_delay,
+        max_delay=server_settings.retry_max_delay,
+        backoff_multiplier=server_settings.retry_backoff_multiplier,
     )
 )
 

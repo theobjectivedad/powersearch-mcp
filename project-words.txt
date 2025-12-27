@@ -11,6 +11,7 @@ duckduckgo
 duplcheck
 DUPLCHECK
 errexit
+ERRORHANDLING
 fastmcp
 geoip
 github
@@ -37,6 +38,7 @@ scrapling
 Scrapling
 searxgn
 searxng
+setenv
 streamable
 testmondata
 tmpfs
