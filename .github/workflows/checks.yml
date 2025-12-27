@@ -8,7 +8,7 @@ on:
       - "v*.*.*"
     tags:
       - "v*.*.*"
-  workflow:
+  workflow_dispatch:
 
 jobs:
 
