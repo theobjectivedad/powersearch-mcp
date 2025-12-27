@@ -1,21 +1,26 @@
 ---
 name: Bug Report
-about: Create a report to help improve PowerSearch MCP
+about: Help us fix issues in PowerSearch MCP
 title: "bug: "
-labels: "bug"
+labels: ["bug"]
 assignees: ""
 ---
 
-# Bug Report
+## Summary
+<!-- One or two sentences describing the issue. -->
 
-**PowerSearch MCP Version:**
+**PowerSearch MCP version**:
 
-## Current Behavior
+## Steps to Reproduce
+<!-- Numbered steps with minimal repro input / config. -->
 
 ## Expected Behavior
 
-## Steps to Reproduce
+## Actual Behavior
+<!-- Include exact error text or output snippets. -->
 
-## Related Code
+## Logs / Screenshots
+<!-- Paste relevant logs or add screenshots. Redact secrets. -->
 
-## Other Information
+## Additional Context
+<!-- Related issues, configs, or notes. -->
