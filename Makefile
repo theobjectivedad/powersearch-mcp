@@ -73,6 +73,11 @@ update-deps:
 inspector:
 	npx @modelcontextprotocol/inspector --config $(CURDIR)/inspector.conf.json --server='PowerSearch MCP (STDIO)'
 
+.PHONY: inspector-http
+inspector-http:
+	npx @modelcontextprotocol/inspector --config $(CURDIR)/inspector.conf.json --server='PowerSearch MCP (HTTP)'
+
+
 .PHONY: inspect
 inspect:
 	uv run fastmcp inspect fastmcp.json --format=fastmcp --skip-env

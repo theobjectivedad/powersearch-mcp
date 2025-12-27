@@ -12,15 +12,8 @@
             ]
         },
         "PowerSearch MCP (HTTP)": {
-            "command": "uv",
-            "args": [
-                "run",
-                "fastmcp",
-                "run",
-                "fastmcp-http.json",
-                "--skip-source",
-                "--skip-env"
-            ]
+            "type": "streamable-http",
+            "url": "http://localhost:8099/mcp"
         }
     }
 }
