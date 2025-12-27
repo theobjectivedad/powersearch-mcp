@@ -1,20 +1,31 @@
 ---
-name: Feature request
-about: Suggest an idea for this project
-title: ''
-labels: ''
-assignees: ''
-
+name: Feature Request
+about: Suggest an improvement or new capability for PowerSearch MCP
+title: "feat: "
+labels: ["enhancement"]
+assignees: ""
 ---
 
-**Is your feature request related to a problem? Please describe.**
-A clear and concise description of what the problem is. Ex. I'm always frustrated when [...]
+## Problem to Solve
+<!-- What user problem or friction does this address? Keep it short. -->
 
-**Describe the solution you'd like**
-A clear and concise description of what you want to happen.
+## Proposed Change
+<!-- What should PowerSearch MCP do differently? Include the interface you expect to change (CLI flag, HTTP endpoint, config, docs). -->
 
-**Describe alternatives you've considered**
-A clear and concise description of any alternative solutions or features you've considered.
+## Alternatives Considered
+<!-- Other approaches you thought about; why they are weaker. -->
 
-**Additional context**
-Add any other context or screenshots about the feature request here.
+## Impacted Areas
+<!-- Check any that apply. -->
+- [ ] CLI / invocation flow
+- [ ] HTTP server / API
+- [ ] Config / defaults
+- [ ] Documentation
+
+## Additional Context
+<!-- Logs, links, screenshots, or rough sketches. -->
+
+## Willing to Submit a PR?
+
+- [ ] Yes
+- [ ] No
