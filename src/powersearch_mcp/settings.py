@@ -249,9 +249,7 @@ class ServerSettings(BaseSettings):
             self.log_level = os.getenv("FASTMCP_LOG_LEVEL", "INFO")
 
         if self.cache_storage is None:
-            self.cache_storage = os.getenv(
-                "POWERSEARCH_CACHE", os.getenv("POWERSEARCH_CACHE_STORAGE")
-            )
+            self.cache_storage = os.getenv("POWERSEARCH_CACHE")
 
         cache_ttl = os.getenv("POWERSEARCH_CACHE_TTL_SEC") or os.getenv(
             "POWERSEARCH_CACHE_TTL_SECONDS"
@@ -282,7 +280,19 @@ def build_key_value_store(
 
     Supported values:
     - None/empty/"none": returns None (caching disabled)
-    - "memory": in-memory store
+    The ``storage`` argument selects the backend implementation; the optional
+    ``default_collection`` argument sets the name of the default collection
+    for backends that support collections (MemoryStore, NullStore, DiskStore,
+    RedisStore). For other values (including when caching is disabled), this
+    parameter is ignored.
+
+    Supported values for ``storage``:
+    ``default_collection`` argument sets the name of the default collection
+    for backends that support collections (MemoryStore, NullStore, DiskStore,
+    RedisStore). For other values (including when caching is disabled), this
+    parameter is ignored.
+
+    Supported values for ``storage``:
     - "null": NullStore for side-effect-free testing
     - file://<path>: DiskStore rooted at the given path
     - redis://<host>:<port>/<db>: RedisStore

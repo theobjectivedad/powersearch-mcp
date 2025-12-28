@@ -1,19 +1,28 @@
 # PowerSearch MCP
 
-![Static analysis checks](https://github.com/theobjectivedad/powersearch-mcp/actions/workflows/checks.yml/badge.svg)
-![Release status](https://github.com/theobjectivedad/powersearch-mcp/actions/workflows/release.yml/badge.svg)
-![PyPi publish](https://github.com/theobjectivedad/powersearch-mcp/actions/workflows/publish.yml/badge.svg)
+![Lint, unit test status](https://img.shields.io/github/actions/workflow/status/theobjectivedad/powersearch-mcp/checks.yml?label=Lint%2FPyTest)
+![Release status](https://img.shields.io/github/actions/workflow/status/theobjectivedad/powersearch-mcp/release.yml?label=Build)
+![Publish status](https://img.shields.io/github/actions/workflow/status/theobjectivedad/powersearch-mcp/publish.yml?label=Publish)
 
-PowerSearch MCP is an Internet search & content retrieval MCP server that can bypass common bot detection mechanisms, and returns markdown-formatted content optimized for AI agents. PowerSearch relies on a number of open source technologies, including:
+![Project status](https://img.shields.io/pypi/status/powersearch-mcp?label=Status)
+![License](https://img.shields.io/github/license/theobjectivedad/powersearch-mcp?label=License)
+![Python Version](https://img.shields.io/pypi/pyversions/powersearch-mcp?label=Python)
 
-Features:
+![PyPi version](https://img.shields.io/pypi/v/powersearch-mcp?label=PyPi%20Version)
+![PyPi downloads](https://img.shields.io/pypi/dm/powersearch-mcp?label=PyPi%20Downloads)
+
+PowerSearch MCP helps AI agents search and retrieve content from the public web with fewer broken fetches, less boilerplate, and clean outputs ready to cite.
+
+**Features:**
 
 - ✅ [SearXNG](https://docs.searxng.org/)-backed meta search with configurable engines, language, safe-search, and pagination.
 - ✅ Strong anti-bot fetching implementation via [Scrapling](https://github.com/D4Vinci/Scrapling) and [Camoufox](https://camoufox.com)
 - ✅ Search response caching at the tool-level to memory, disk, and Redis storage backends
+- ✅ Automatic retries with exponential backoff for both search and fetch operations
 - ✅ AI Agent-friendly responses: HTML pages are converted to markdown automatically via [Trafilatura](https://github.com/adbar/trafilatura)
 - ✅ Supports both STDIO and streaming HTTP transports
 - ✅ Health check endpoint for HTTP transport
+- ✅ Extensive [configuration](#configuration) suitable for many deployment scenarios
 
 ## Setup
 
@@ -140,5 +149,5 @@ PowerSearch can cache tool responses (search and fetch_url) via FastMCP's respon
 
 | Setting | What it does | When to change |
 | --- | --- | --- |
-| `POWERSEARCH_CACHE` (alias: `POWERSEARCH_CACHE_STORAGE`) | Storage backend selector: `memory`, `null` (no-op, good for tests), `file:///path/to/dir`, or `redis://host:port/db`. Empty/`None` disables caching. | Enable for repeat queries or to avoid refetching the same URLs. Use `memory` for local dev, `file://` for lightweight persistence, and `redis://` for shared/distributed deployments. |
+| `POWERSEARCH_CACHE` | Storage backend selector: `memory`, `null` (no-op, good for tests), `file:///path/to/dir`, or `redis://host:port/db`. Empty/`None` disables caching. | Enable for repeat queries or to avoid refetching the same URLs. Use `memory` for local dev, `file://` for lightweight persistence, and `redis://` for shared/distributed deployments. |
 | `POWERSEARCH_CACHE_TTL_SEC` (alias: `POWERSEARCH_CACHE_TTL_SECONDS`) | TTL for cached tool responses (seconds). Defaults to 3600. | Shorten for fresher results; lengthen when upstream data changes rarely. |

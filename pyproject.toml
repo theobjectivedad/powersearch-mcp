@@ -1,7 +1,7 @@
 [project]
 name = "powersearch-mcp"
 dynamic = ["version"]
-description = "PowerSearch is an Internet search & content retrieval MCP server that can bypass common bot detection mechanisms, and returns markdown-formatted content optimized for AI agents."
+description = "PowerSearch MCP helps AI agents search and retrieve content from the public web with fewer broken fetches, less boilerplate, and clean outputs ready to cite."
 authors = [{ name = "The Objective Dad", email = "theobjectivedad@pm.me" }]
 keywords = ["mcp", "search", "web", "retrieval", "agents", "scraping"]
 readme = "README.md"

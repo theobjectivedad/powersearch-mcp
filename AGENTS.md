@@ -65,7 +65,7 @@ uv run fastmcp run fastmcp.json --skip-source --skip-env
 Streamable HTTP transport:
 
 ```shell
-uv run fastmcp run fastmcp.json --skip-source --skip-env
+uv run fastmcp run fastmcp-http.json --skip-source --skip-env
 ```
 
 ### Testing
