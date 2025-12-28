@@ -1,15 +1,19 @@
-# Power Search MCP
+# PowerSearch MCP
 
 ![Static analysis checks](https://github.com/theobjectivedad/powersearch-mcp/actions/workflows/checks.yml/badge.svg)
 ![Release status](https://github.com/theobjectivedad/powersearch-mcp/actions/workflows/release.yml/badge.svg)
 ![PyPi publish](https://github.com/theobjectivedad/powersearch-mcp/actions/workflows/publish.yml/badge.svg)
 
-PowerSearch is an Internet search & content retrieval MCP server that can bypass common bot detection mechanisms, and returns markdown-formatted content optimized for AI agents. PowerSearch relies on a number of open source technologies, including:
+PowerSearch MCP is an Internet search & content retrieval MCP server that can bypass common bot detection mechanisms, and returns markdown-formatted content optimized for AI agents. PowerSearch relies on a number of open source technologies, including:
 
-- [SearXNG](https://docs.searxng.org/) Meta search engine capable of normalizing scores across many backend search engines and supports returning JSON formatted search results.
-- [Scrapling](https://github.com/D4Vinci/Scrapling) Modern web scraping library.
-- [Camoufox](https://camoufox.com/) Headless browser with strong anti-bot capabilities.
-- [Trafilatura](https://github.com/adbar/trafilatura) For text extraction and HTML‑to‑Markdown conversion.
+Features:
+
+- ✅ [SearXNG](https://docs.searxng.org/)-backed meta search with configurable engines, language, safe-search, and pagination.
+- ✅ Strong anti-bot fetching implementation via [Scrapling](https://github.com/D4Vinci/Scrapling) and [Camoufox](https://camoufox.com)
+- ✅ Search response caching at the tool-level to memory, disk, and Redis storage backends
+- ✅ AI Agent-friendly responses: HTML pages are converted to markdown automatically via [Trafilatura](https://github.com/adbar/trafilatura)
+- ✅ Supports both STDIO and streaming HTTP transports
+- ✅ Health check endpoint for HTTP transport
 
 ## Setup
 
@@ -78,9 +82,7 @@ Content strategy matters too. With `fetch`, the tool will fetch each retained UR
 
 ## Configuration
 
-PowerSearch reads environment variables with the `POWERSEARCH_` prefix (also respected via a `.env` file). The table below shows when each setting matters.
-
-By design, configuration exists only as environment variables to make using the Power Search tool as simple as possible for AI agents.
+PowerSearch reads environment variables with the `POWERSEARCH_` prefix (also respected via a `.env` file). By design, configuration exists only as environment variables to make using the Power Search tool as simple as possible for AI agents.
 
 ### Search Behavior
 
@@ -116,22 +118,27 @@ By design, configuration exists only as environment variables to make using the 
 | `POWERSEARCH_TRAFILATURA_DEDUPLICATE` | Removes near-identical blocks. | Disable only if de-duplication cuts useful repeated info. |
 | `POWERSEARCH_TRAFILATURA_FAVOR_PRECISION` | Prefers precision over recall. | Turn off to capture more content at the expense of noise. |
 
-## Transports
+### Middleware & Reliability
 
-PowerSearch MCP supports launching of both STDIO and HTTP transports.
+| Setting | What it does | When to change |
+| --- | --- | --- |
+| `POWERSEARCH_LOG_LEVEL` | Logging level for middleware; falls back to `FASTMCP_LOG_LEVEL` when unset. | Raise to `DEBUG`/`INFO` while troubleshooting; lower to `WARNING`/`ERROR` in production. |
+| `POWERSEARCH_INCLUDE_PAYLOADS` | Include full MCP request/response bodies in logs. | Enable temporarily for debugging only; can expose user data. |
+| `POWERSEARCH_INCLUDE_PAYLOAD_LENGTH` | Log payload length alongside metadata. | Pair with payload logging when sizes matter but full bodies are off. |
+| `POWERSEARCH_ESTIMATE_PAYLOAD_TOKENS` | Log approximate token counts (length // 4). | Enable when monitoring token budgets. |
+| `POWERSEARCH_MAX_PAYLOAD_LENGTH` | Cap logged payload characters. | Lower to reduce log volume; raise when debugging truncated bodies. |
+| `POWERSEARCH_ERRORHANDLING_TRACEBACK` | Include tracebacks in error responses. | Enable only in non-production environments. |
+| `POWERSEARCH_ERRORHANDLING_TRANSFORM` | Convert exceptions into MCP-friendly error responses. | Leave on unless you need raw exceptions for debugging. |
+| `POWERSEARCH_RETRY_RETRIES` | Max retry attempts applied by retry middleware. | Increase for flaky upstreams; set to 0 to disable retries. |
+| `POWERSEARCH_RETRY_BASE_DELAY` | Initial delay between retries (seconds). | Tune for backoff aggressiveness. |
+| `POWERSEARCH_RETRY_MAX_DELAY` | Upper bound on backoff delay (seconds). | Prevent excessively long waits. |
+| `POWERSEARCH_RETRY_BACKOFF_MULTIPLIER` | Exponential backoff multiplier. | Lower for gentler backoff; raise for faster escalation. |
 
-### STDIO
+### Caching
 
-Transport for Power MCP anc can be launched via `powersearch-mcp`.
+PowerSearch can cache tool responses (search and fetch_url) via FastMCP's response caching middleware. Caching is off by default.
 
-### Streaming HTTP
-
-Streamable HTTP is launched as an ASGI application via `uvicorn`.
-
-Streamable HTTP transports will honor environment variables from a `.env` file in the startup directory. An example `.env` file can be found at: `example-configs/example.env`.
-
-The streamable HTTP server supports a basic health check endpoint. The default URL path is `http://localhost:8092/health`
-
-By default, the URL path is the standard `/mcp`.
-
-The streamable HTTP transport can be launched via an internal `uvicorn` ASGI server (easiest, most common) or via your own ASGI server by referencing `app.py`.
+| Setting | What it does | When to change |
+| --- | --- | --- |
+| `POWERSEARCH_CACHE` (alias: `POWERSEARCH_CACHE_STORAGE`) | Storage backend selector: `memory`, `null` (no-op, good for tests), `file:///path/to/dir`, or `redis://host:port/db`. Empty/`None` disables caching. | Enable for repeat queries or to avoid refetching the same URLs. Use `memory` for local dev, `file://` for lightweight persistence, and `redis://` for shared/distributed deployments. |
+| `POWERSEARCH_CACHE_TTL_SEC` (alias: `POWERSEARCH_CACHE_TTL_SECONDS`) | TTL for cached tool responses (seconds). Defaults to 3600. | Shorten for fresher results; lengthen when upstream data changes rarely. |

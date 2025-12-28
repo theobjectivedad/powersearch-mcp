@@ -4,9 +4,15 @@ from __future__ import annotations
 
 import logging
 import os
-from typing import Literal
+from pathlib import Path
+from typing import TYPE_CHECKING, Literal
 
+from key_value.aio.stores.disk import DiskStore
+from key_value.aio.stores.memory import MemoryStore
+from key_value.aio.stores.null import NullStore
+from key_value.aio.stores.redis import RedisStore
 from pydantic import (
+    AliasChoices,
     BaseModel,
     Field,
     HttpUrl,
@@ -15,6 +21,9 @@ from pydantic import (
     model_validator,
 )
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+if TYPE_CHECKING:  # pragma: no cover - type checking only
+    from key_value.aio.protocols.key_value import AsyncKeyValue
 
 DEFAULT_BASE_URL: HttpUrl = TypeAdapter(HttpUrl).validate_python(
     "http://127.0.0.1:9876"
@@ -220,11 +229,40 @@ class ServerSettings(BaseSettings):
         gt=0,
         description="Exponential backoff multiplier between retry attempts.",
     )
+    cache_storage: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices("cache_storage", "cache"),
+        description=(
+            "Storage backend for response caching: memory, null, file://, or redis://."
+        ),
+    )
+    cache_ttl_sec: int = Field(
+        default=3600,
+        ge=0,
+        validation_alias=AliasChoices("cache_ttl_sec", "cache_ttl_seconds"),
+        description="TTL for cached tool responses (seconds).",
+    )
 
     @model_validator(mode="after")
     def _apply_log_level_default(self) -> ServerSettings:
         if self.log_level is None:
             self.log_level = os.getenv("FASTMCP_LOG_LEVEL", "INFO")
+
+        if self.cache_storage is None:
+            self.cache_storage = os.getenv(
+                "POWERSEARCH_CACHE", os.getenv("POWERSEARCH_CACHE_STORAGE")
+            )
+
+        cache_ttl = os.getenv("POWERSEARCH_CACHE_TTL_SEC") or os.getenv(
+            "POWERSEARCH_CACHE_TTL_SECONDS"
+        )
+        if cache_ttl is not None:
+            try:
+                self.cache_ttl_sec = int(cache_ttl)
+            except ValueError as exc:  # pragma: no cover - defensive guard
+                raise ValueError(
+                    "POWERSEARCH_CACHE_TTL_SEC must be an int"
+                ) from exc
         return self
 
     def log_level_value(self) -> int:
@@ -235,6 +273,57 @@ class ServerSettings(BaseSettings):
 
         mapping = logging.getLevelNamesMapping()
         return mapping.get(str(self.log_level).upper(), logging.INFO)
+
+
+def build_key_value_store(
+    storage: str | None, *, default_collection: str | None = None
+) -> AsyncKeyValue | None:
+    """Construct an AsyncKeyValue backend from a shorthand string.
+
+    Supported values:
+    - None/empty/"none": returns None (caching disabled)
+    - "memory": in-memory store
+    - "null": NullStore for side-effect-free testing
+    - file://<path>: DiskStore rooted at the given path
+    - redis://<host>:<port>/<db>: RedisStore
+    """
+
+    if storage is None:
+        return None
+
+    normalized = str(storage).strip()
+    if not normalized or normalized.lower() == "none":
+        return None
+
+    lowered = normalized.lower()
+
+    if lowered == "memory":
+        return MemoryStore(default_collection=default_collection)
+
+    if lowered == "null":
+        return NullStore(
+            default_collection=default_collection,
+            stable_api=True,
+        )
+
+    if lowered.startswith("file://"):
+        path_str = normalized[len("file://") :]
+        if not path_str:
+            raise ValueError(
+                "POWERSEARCH_CACHE 'file://' storage requires a directory path"
+            )
+        directory = Path(path_str).expanduser()
+        return DiskStore(
+            directory=directory, default_collection=default_collection
+        )
+
+    if lowered.startswith("redis://"):
+        return RedisStore(url=normalized, default_collection=default_collection)
+
+    raise ValueError(
+        f"Unsupported POWERSEARCH_CACHE value '{storage}'. Use memory, null, "
+        "file://<path>, or redis://<host>:<port>/<db>."
+    )
 
 
 class Settings(BaseModel):
@@ -255,6 +344,7 @@ __all__ = [
     "PowerSearchSettings",
     "ServerSettings",
     "Settings",
+    "build_key_value_store",
     "powersearch_settings",
     "server_settings",
     "settings",

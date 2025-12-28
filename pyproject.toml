@@ -10,11 +10,13 @@ requires-python = ">=3.13"
 dependencies = [
     "camoufox[geoip]>=0.4.11,<1",
     "curl-cffi>=0.14.0,<1",
+    "eunomia-mcp>=0.3.10",
     "fastmcp>=2.14,<3",
     "httpx[http2]>=0.28.1,<1",
     "mcp[cli]>=1.12.1,<2",
     "msgspec>=0.20.0,<1",
     "numpy>=2.4.0,<3",
+    "py-key-value-aio[disk,memory,redis]>=0.3.0,<1",
     "pydantic-settings>=2.7.0,<3",
     "pydantic>=2.12.5,<3",
     "scrapling>=0.3.12,<1",

@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import importlib
 from typing import Callable, Generator
+from unittest.mock import ANY
 
 import pytest
+from key_value.aio.stores.memory import MemoryStore
 
 
 class StubLoggingMiddleware:
@@ -17,6 +19,11 @@ class StubErrorHandlingMiddleware:
 
 
 class StubRetryMiddleware:
+    def __init__(self, **kwargs: object) -> None:
+        self.kwargs = kwargs
+
+
+class StubResponseCachingMiddleware:
     def __init__(self, **kwargs: object) -> None:
         self.kwargs = kwargs
 
@@ -117,6 +124,10 @@ def test_app_wires_middleware_with_settings(
         "fastmcp.server.middleware.error_handling.RetryMiddleware",
         StubRetryMiddleware,
     )
+    monkeypatch.setattr(
+        "fastmcp.server.middleware.caching.ResponseCachingMiddleware",
+        StubResponseCachingMiddleware,
+    )
 
     settings_module = importlib.import_module("powersearch_mcp.settings")
     importlib.reload(settings_module)
@@ -154,3 +165,52 @@ def test_app_wires_middleware_with_settings(
     }
 
     assert mcp.transport == "streamable-http"
+
+
+def test_app_adds_caching_when_enabled(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("POWERSEARCH_CACHE", "memory")
+    monkeypatch.setenv("POWERSEARCH_CACHE_TTL_SEC", "1800")
+
+    monkeypatch.setattr("fastmcp.server.FastMCP", StubMCP)
+    monkeypatch.setattr(
+        "fastmcp.server.middleware.logging.LoggingMiddleware",
+        StubLoggingMiddleware,
+    )
+    monkeypatch.setattr(
+        "fastmcp.server.middleware.error_handling.ErrorHandlingMiddleware",
+        StubErrorHandlingMiddleware,
+    )
+    monkeypatch.setattr(
+        "fastmcp.server.middleware.error_handling.RetryMiddleware",
+        StubRetryMiddleware,
+    )
+
+    monkeypatch.setattr(
+        "fastmcp.server.middleware.caching.ResponseCachingMiddleware",
+        StubResponseCachingMiddleware,
+    )
+
+    settings_module = importlib.import_module("powersearch_mcp.settings")
+    importlib.reload(settings_module)
+
+    app_module = importlib.import_module("powersearch_mcp.app")
+    importlib.reload(app_module)
+
+    mcp = app_module.mcp
+
+    assert isinstance(mcp, StubMCP)
+    assert len(mcp.added) == 4
+
+    caching_mw = mcp.added[-1]
+    assert isinstance(caching_mw, StubResponseCachingMiddleware)
+    assert caching_mw.kwargs == {
+        "cache_storage": ANY,
+        "call_tool_settings": {
+            "enabled": True,
+            "ttl": 1800,
+            "included_tools": ["search", "fetch_url"],
+        },
+    }
+    assert isinstance(caching_mw.kwargs["cache_storage"], MemoryStore)

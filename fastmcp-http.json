@@ -25,6 +25,8 @@
             "POWERSEARCH_CONTENT_LIMIT": "4000",
             "POWERSEARCH_TIMEOUT_SEC": "20",
             "POWERSEARCH_HTTP2": "false",
+            "POWERSEARCH_CACHE": "memory",
+            "POWERSEARCH_CACHE_TTL_SEC": "3600",
             "POWERSEARCH_LOG_LEVEL": "INFO",
             "POWERSEARCH_INCLUDE_PAYLOADS": "false",
             "POWERSEARCH_INCLUDE_PAYLOAD_LENGTH": "false",

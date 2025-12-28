@@ -11,6 +11,7 @@ duckduckgo
 duplcheck
 DUPLCHECK
 errexit
+errorhandling
 ERRORHANDLING
 fastmcp
 geoip

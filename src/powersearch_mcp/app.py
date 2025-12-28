@@ -3,6 +3,7 @@
 from typing import TYPE_CHECKING, Annotated
 
 from fastmcp.server import Context, FastMCP
+from fastmcp.server.middleware.caching import ResponseCachingMiddleware
 from fastmcp.server.middleware.error_handling import (
     ErrorHandlingMiddleware,
     RetryMiddleware,
@@ -15,19 +16,15 @@ from starlette.responses import Response
 if TYPE_CHECKING:  # pragma: no cover - type checking only
     from starlette.applications import Starlette
     from starlette.requests import Request
-    from starlette.types import ASGIApp, Receive, Scope, Send
 else:
     Starlette = object
     Request = object
-    ASGIApp = object
-    Receive = object
-    Scope = object
-    Send = object
+
 
 from powersearch_mcp.powersearch import SearchResultRecord
 from powersearch_mcp.powersearch import fetch_url as run_fetch_url
 from powersearch_mcp.powersearch import search as run_search
-from powersearch_mcp.settings import server_settings
+from powersearch_mcp.settings import build_key_value_store, server_settings
 
 mcp = FastMCP(
     name="powersearch",
@@ -39,7 +36,6 @@ mcp = FastMCP(
     ),
 )
 
-
 mcp.add_middleware(
     LoggingMiddleware(
         log_level=server_settings.log_level_value(),
@@ -50,14 +46,12 @@ mcp.add_middleware(
     )
 )
 
-
 mcp.add_middleware(
     ErrorHandlingMiddleware(
         include_traceback=server_settings.errorhandling_traceback,
         transform_errors=server_settings.errorhandling_transform,
     )
 )
-
 
 mcp.add_middleware(
     RetryMiddleware(
@@ -67,6 +61,22 @@ mcp.add_middleware(
         backoff_multiplier=server_settings.retry_backoff_multiplier,
     )
 )
+
+cache_storage = build_key_value_store(
+    server_settings.cache_storage, default_collection="powersearch"
+)
+
+if cache_storage is not None:
+    mcp.add_middleware(
+        ResponseCachingMiddleware(
+            cache_storage=cache_storage,
+            call_tool_settings={
+                "enabled": True,
+                "ttl": server_settings.cache_ttl_sec,
+                "included_tools": ["search", "fetch_url"],
+            },
+        )
+    )
 
 
 @mcp.prompt(title="Internet Search")
