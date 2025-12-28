@@ -103,7 +103,7 @@ if server_settings.authz_policy_path:
 
 
 @mcp.prompt(title="Internet Search")
-# Keep async to satisfy FastMCP task validation when tasks=True on the server.
+# tasks=True requires async prompts/tools even when no awaits are used.
 async def internet_search_prompt(
     goal: Annotated[str, Field(description="What you are trying to find")],
     time_range: Annotated[

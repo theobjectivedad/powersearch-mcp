@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import importlib
-import os
 from pathlib import Path
 from typing import Callable, Generator
 from unittest.mock import ANY
@@ -100,14 +99,15 @@ def _reset_app_module(
 ) -> Generator[None, None, None]:
     import powersearch_mcp.app as app_module
 
-    yield
+    try:
+        yield
+    finally:
+        monkeypatch.delenv("POWERSEARCH_AUTHZ_POLICY_PATH", raising=False)
 
-    monkeypatch.delenv("POWERSEARCH_AUTHZ_POLICY_PATH", raising=False)
+        settings_module = importlib.import_module("powersearch_mcp.settings")
+        importlib.reload(settings_module)
 
-    settings_module = importlib.import_module("powersearch_mcp.settings")
-    importlib.reload(settings_module)
-
-    importlib.reload(app_module)
+        importlib.reload(app_module)
 
 
 def test_app_wires_middleware_with_settings(

@@ -16,6 +16,7 @@ __pycache__/
 build/
 develop-eggs/
 dist/
+/src/powersearch_mcp/_version.py
 downloads/
 eggs/
 .eggs/

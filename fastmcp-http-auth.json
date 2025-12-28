@@ -6,7 +6,6 @@
         "entrypoint": "mcp"
     },
     "environment": {
-        "type": "uv",
         "project": ".",
         "editable": [ "." ]
     },
