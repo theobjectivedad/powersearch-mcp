@@ -89,6 +89,11 @@ if cache_storage is not None:
 if server_settings.authz_policy_path:
     policy_path = Path(server_settings.authz_policy_path).expanduser()
 
+    if not policy_path.is_file():
+        message = f"Eunomia policy file not found at {policy_path}"
+        logger.error(message)
+        raise FileNotFoundError(message)
+
     mcp.add_middleware(
         create_eunomia_middleware(
             policy_file=str(policy_path),
@@ -98,6 +103,7 @@ if server_settings.authz_policy_path:
 
 
 @mcp.prompt(title="Internet Search")
+# Keep async to satisfy FastMCP task validation when tasks=True on the server.
 async def internet_search_prompt(
     goal: Annotated[str, Field(description="What you are trying to find")],
     time_range: Annotated[

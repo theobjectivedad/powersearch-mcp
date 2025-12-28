@@ -38,17 +38,20 @@ This guide explains how to secure PowerSearch MCP for headless MCP clients using
   - `FASTMCP_SERVER_AUTH_INTROSPECTION_REQUIRED_SCOPES`
 - Authorization policy (static file):
   - `POWERSEARCH_AUTHZ_POLICY_PATH` → path to a Eunomia JSON policy file. When set and present, authorization middleware is enabled.
+- HTTP session docket (Streamable HTTP transport):
+  - `FASTMCP_DOCKET_URL` (e.g., `memory://`, `redis://host:port/db`) stores session state.
+  - `FASTMCP_DOCKET_CONCURRENCY` caps concurrent session handling; raise it for heavier loads.
 
 ## Quickstart (Keycloak + JWT, localhost)
 
-1) Configure Keycloak realm/client to issue JWT access tokens (RS256):
+1. Configure Keycloak realm/client to issue JWT access tokens (RS256):
 
 - JWKS URI (default): `http://127.0.0.1:8080/realms/example/protocol/openid-connect/certs`
 - Issuer: `http://127.0.0.1:8080/realms/example`
 - Audience: the client ID you assign to PowerSearch (e.g., `powersearch-mcp`).
 - Scopes: add a scope like `powersearch:read` and include it in issued tokens.
 
-1) Set env (or `.env`) using the sample in [example-configs/example.env](example-configs/example.env):
+1. Set env (or `.env`) using the sample in [example-configs/example.env](example-configs/example.env):
 
 - `FASTMCP_SERVER_AUTH=fastmcp.server.auth.RemoteAuthProvider`
 - `FASTMCP_SERVER_AUTH_JWT_JWKS_URI=...` (Keycloak JWKS)
@@ -60,7 +63,7 @@ This guide explains how to secure PowerSearch MCP for headless MCP clients using
 - `FASTMCP_SERVER_AUTH_REMOTEAUTHPROVIDER_BASE_URL=http://127.0.0.1:8099`
 - `POWERSEARCH_AUTHZ_POLICY_PATH=example-configs/mcp_policies.json`
 
-1) Run HTTP transport: `fastmcp run fastmcp-http.json --skip-env --project .`
+1. Run HTTP transport: `fastmcp run fastmcp-http-auth.json --skip-env --project .`
 
 - Clients connect to `http://127.0.0.1:8099/mcp` with `Authorization: Bearer <token>`.
 - STDIO transport remains unauthenticated; use only in trusted contexts.

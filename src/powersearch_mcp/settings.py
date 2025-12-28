@@ -245,8 +245,9 @@ class ServerSettings(BaseSettings):
     authz_policy_path: str | None = Field(
         default=None,
         description=(
-            "Path to a Eunomia policy JSON file. When provided and the file exists, "
-            "the Eunomia authorization middleware is enabled."
+            "Path to a Eunomia policy JSON file. When provided, the file must exist "
+            "or the server will fail to start. When omitted, authorization middleware "
+            "is disabled."
         ),
     )
     enable_audit_logging: bool = Field(

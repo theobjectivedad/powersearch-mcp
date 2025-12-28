@@ -95,12 +95,14 @@ class StubMCP:
 
 
 @pytest.fixture(autouse=True)
-def _reset_app_module() -> Generator[None, None, None]:
+def _reset_app_module(
+    monkeypatch: pytest.MonkeyPatch,
+) -> Generator[None, None, None]:
     import powersearch_mcp.app as app_module
 
     yield
 
-    os.environ.pop("POWERSEARCH_AUTHZ_POLICY_PATH", None)
+    monkeypatch.delenv("POWERSEARCH_AUTHZ_POLICY_PATH", raising=False)
 
     settings_module = importlib.import_module("powersearch_mcp.settings")
     importlib.reload(settings_module)

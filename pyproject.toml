@@ -1,7 +1,7 @@
 [project]
 name = "powersearch-mcp"
 dynamic = ["version"]
-description = "PowerSearch MCP helps AI agents search and retrieve content from the public web with fewer broken fetches, less boilerplate, and clean outputs ready to cite."
+description = "PowerSearch MCP helps AI agents search and retrieve content from the public web with fewer broken fetches and clean, AI-friendly outputs ready to cite."
 authors = [{ name = "The Objective Dad", email = "theobjectivedad@pm.me" }]
 keywords = ["mcp", "search", "web", "retrieval", "agents", "scraping"]
 readme = "README.md"

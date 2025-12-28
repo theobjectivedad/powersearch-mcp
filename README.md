@@ -15,7 +15,7 @@ PowerSearch MCP helps AI agents search and retrieve content from the public web 
 
 **Feature Roadmap:**
 
-- ✅ [SearXNG](https://docs.searxng.org/)-backed meta search with configurable engines, language, safe-search, and pagination.
+- ✅ [SearXNG](https://docs.searxng.org/)-backed meta search with configurable engines, language, safe-search, and pagination
 - ✅ Strong anti-bot fetching implementation via [Scrapling](https://github.com/D4Vinci/Scrapling) and [Camoufox](https://camoufox.com)
 - ✅ Search response caching at the tool-level to memory, disk, and Redis storage backends
 - ✅ Automatic retries with exponential backoff for both search and fetch operations
@@ -26,7 +26,7 @@ PowerSearch MCP helps AI agents search and retrieve content from the public web 
 - ✅ Authentication support for both JWT and opaque tokens
 - ✅ Authorization support for embedded [Eunomia](https://github.com/whataboutyou-ai/eunomia) policies
 - 🗓️ (Future) Auto summarization of search results via [MCP sampling](https://modelcontextprotocol.io/specification/2025-06-18/client/sampling)
-- 🗓️ (Future) Client selectable synchronous (current behavior) or asynchronous [SEP-1686](https://modelcontextprotocol.io/specification/2025-11-25/basic/utilities/tasks) execution for search / fetch tools.
+- 🗓️ (Future) Client selectable synchronous (current behavior) or asynchronous [SEP-1686](https://modelcontextprotocol.io/specification/2025-11-25/basic/utilities/tasks) execution for search / fetch tools
 - 🗓️ (Future) Containerization, publish public image
 - 🗓️ (Future) Prometheus metrics exporter
 - 🗓️ (Future) Helm chart
@@ -149,6 +149,8 @@ PowerSearch reads environment variables with the `POWERSEARCH_` prefix (also res
 | `POWERSEARCH_RETRY_BASE_DELAY` | Initial delay between retries (seconds). | Tune for backoff aggressiveness. |
 | `POWERSEARCH_RETRY_MAX_DELAY` | Upper bound on backoff delay (seconds). | Prevent excessively long waits. |
 | `POWERSEARCH_RETRY_BACKOFF_MULTIPLIER` | Exponential backoff multiplier. | Lower for gentler backoff; raise for faster escalation. |
+| `FASTMCP_DOCKET_URL` | Session docket store for Streamable HTTP (e.g., `memory://`, `redis://host:port/db`). | Switch to Redis or another backend when you need persistent/distributed HTTP sessions. |
+| `FASTMCP_DOCKET_CONCURRENCY` | Max concurrent docket operations. | Increase for higher HTTP session throughput; lower to limit resource use. |
 
 ### Caching
 

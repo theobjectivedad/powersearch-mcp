@@ -45,7 +45,6 @@
             "FASTMCP_STATELESS_HTTP": "true",
             "FASTMCP_DOCKET_URL": "memory://",
             "FASTMCP_DOCKET_CONCURRENCY": "10",
-
             "FASTMCP_SERVER_AUTH": "fastmcp.server.auth.RemoteAuthProvider",
             "FASTMCP_SERVER_AUTH_JWT_JWKS_URI": "http://127.0.0.1:8080/realms/example/protocol/openid-connect/certs",
             "FASTMCP_SERVER_AUTH_JWT_ISSUER": "http://127.0.0.1:8080/realms/example",
