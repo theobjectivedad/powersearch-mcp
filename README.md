@@ -173,6 +173,8 @@ PowerSearch can cache tool responses (search and fetch_url) via FastMCP's respon
 
 ### Authentication & Authorization
 
+See [docs/auth.md](docs/auth.md) for full details.
+
 | Setting | What it does | When to change |
 | --- | --- | --- |
 | `FASTMCP_SERVER_AUTH` | Selects the FastMCP auth provider (e.g., RemoteAuthProvider for OAuth discovery plus token verification, JWTVerifier for self-contained JWTs, IntrospectionTokenVerifier for opaque tokens). | Switch based on how tokens are issued; use RemoteAuthProvider when you want clients to discover your IdP, pick JWT or introspection verifiers to match token type. |
