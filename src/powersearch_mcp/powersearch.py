@@ -4,16 +4,17 @@ import asyncio
 import logging
 import re
 import time
-from typing import Any, Literal, Protocol
+from typing import Any, Protocol
 from urllib.parse import urljoin
 
 import httpx
 import numpy as np
 import trafilatura
-from pydantic import BaseModel, Field, HttpUrl, TypeAdapter, field_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import BaseModel, Field
 from scrapling.fetchers import StealthyFetcher
 from trafilatura.settings import use_config
+
+from powersearch_mcp.settings import powersearch_settings as settings
 
 # Logger level configuration
 for _logger_name in (
@@ -26,9 +27,6 @@ for _logger_name in (
 ):
     logging.getLogger(_logger_name).setLevel(logging.WARNING)
 
-DEFAULT_BASE_URL: HttpUrl = TypeAdapter(HttpUrl).validate_python(
-    "http://127.0.0.1:9876"
-)
 HTTP_STATUS_OK_MIN = 200
 HTTP_STATUS_OK_MAX = 299
 VALID_TIME_RANGES = {"day", "month", "year"}
@@ -40,145 +38,6 @@ class MessageSink(Protocol):
     async def warning(self, message: str) -> None: ...
 
     async def error(self, message: str) -> None: ...
-
-
-class PowerSearchSettings(BaseSettings):
-    """Runtime configuration for Power Search sourced from environment."""
-
-    model_config = SettingsConfigDict(
-        env_prefix="POWERSEARCH_",
-        env_file=".env",
-        env_file_encoding="utf-8",
-        extra="ignore",
-    )
-
-    base_url: HttpUrl = Field(
-        default=DEFAULT_BASE_URL,
-        description="Base SearXNG search URL (should end with /search).",
-    )
-    engines: list[str] = Field(
-        default_factory=list,
-        description="Comma-separated SearXNG engines to query.",
-    )
-    language: str = Field(
-        default="en",
-        description="IETF language tag passed to SearXNG.",
-    )
-    safe_search: int = Field(
-        default=1,
-        ge=0,
-        le=2,
-        description="Safe search level expected by SearXNG (0, 1, or 2).",
-    )
-    max_page: int = Field(
-        default=1,
-        ge=1,
-        description="Number of result pages to request from SearXNG.",
-    )
-    filter_score_percentile: float | None = Field(
-        default=75.0,
-        ge=0,
-        le=100,
-        description=(
-            "Score percentile cutoff; set to None to disable percentile filtering."
-        ),
-    )
-    filter_top_k: int = Field(
-        default=10,
-        ge=1,
-        description="Maximum results retained after filtering by score.",
-    )
-    content_strategy: Literal["quick", "fetch"] = Field(
-        default="fetch",
-        description="How to populate result content: quick (use SearXNG snippet) or fetch full pages.",
-    )
-    content_limit: int | None = Field(
-        default=4000,
-        ge=0,
-        description="Trim each result's content to this many characters; None to disable.",
-    )
-    timeout_sec: int = Field(
-        default=20,
-        gt=0,
-        description="Total timeout budget (seconds) for search plus content handling.",
-    )
-    http2: bool = Field(
-        default=False,
-        description="Enable HTTP/2 for upstream requests when supported.",
-    )
-    verify: bool = Field(
-        default=True,
-        description="Verify TLS certificates for upstream requests.",
-    )
-    trafilatura_extraction_timeout: float = Field(
-        default=0.0,
-        ge=0,
-        description="Seconds trafilatura may spend extracting; 0 disables the limit.",
-    )
-    trafilatura_min_extracted_size: int = Field(
-        default=100,
-        ge=0,
-        description="Minimum extracted text size required to accept content.",
-    )
-    trafilatura_min_duplcheck_size: int = Field(
-        default=100,
-        ge=0,
-        description="Minimum size used by trafilatura's duplicate check.",
-    )
-    trafilatura_max_repetitions: int = Field(
-        default=2,
-        ge=0,
-        description="Maximum repeated content blocks retained before trimming.",
-    )
-    trafilatura_extensive_date_search: bool = Field(
-        default=True,
-        description="Enable trafilatura's extensive date search heuristics.",
-    )
-    trafilatura_include_links: bool = Field(
-        default=False,
-        description="Whether to include links in extracted markdown.",
-    )
-    trafilatura_include_images: bool = Field(
-        default=False,
-        description="Whether to include images in extracted markdown.",
-    )
-    trafilatura_include_tables: bool = Field(
-        default=True,
-        description="Whether to include tables in extracted markdown.",
-    )
-    trafilatura_include_comments: bool = Field(
-        default=False,
-        description="Whether to include HTML comments in extracted markdown.",
-    )
-    trafilatura_include_formatting: bool = Field(
-        default=False,
-        description="Whether to preserve formatting markup from the source.",
-    )
-    trafilatura_deduplicate: bool = Field(
-        default=True,
-        description="Deduplicate near-identical blocks while extracting.",
-    )
-    trafilatura_favor_precision: bool = Field(
-        default=True,
-        description="Favor precision over recall when extracting content.",
-    )
-
-    @field_validator("engines", mode="before")
-    @classmethod
-    def parse_engines(
-        cls, value: str | list[str] | None
-    ) -> str | list[str] | None:
-        if isinstance(value, str):
-            return [part.strip() for part in value.split(",") if part.strip()]
-        return value
-
-    @field_validator("engines")
-    @classmethod
-    def ensure_engines(cls, value: list[str]) -> list[str]:
-        return [engine for engine in value if engine]
-
-
-settings = PowerSearchSettings()
 
 
 class SearchResultRecord(BaseModel):
@@ -507,7 +366,6 @@ async def fetch_url(
 
 __all__ = [
     "FetchError",
-    "PowerSearchSettings",
     "SearchError",
     "SearchResultRecord",
     "_filter_scores_by_percentile",

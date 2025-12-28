@@ -1,27 +1,28 @@
 [project]
 name = "powersearch-mcp"
 dynamic = ["version"]
-description = "PowerSearch is an Internet search & content retrieval MCP server that can bypass common bot detection mechanisms, and returns markdown-formatted content optimized for AI agents."
+description = "PowerSearch MCP helps AI agents search and retrieve content from the public web with fewer broken fetches, less boilerplate, and clean outputs ready to cite."
 authors = [{ name = "The Objective Dad", email = "theobjectivedad@pm.me" }]
 keywords = ["mcp", "search", "web", "retrieval", "agents", "scraping"]
 readme = "README.md"
 license = { file = "LICENSE" }
 requires-python = ">=3.13"
 dependencies = [
-    "camoufox[geoip]>=0.4.11",
-    "click>=8.3.1",
-    "curl-cffi>=0.14.0",
-    "fastmcp>=2.14",
-    "httpx[http2]>=0.28.1",
-    "mcp[cli]>=1.12.1",
-    "msgspec>=0.20.0",
-    "numpy>=2.4.0",
-    "pydantic-settings>=2.7.0",
-    "pydantic>=2.12.5",
-    "scrapling>=0.3.12",
-    "trafilatura>=2.0.0",
-    "truststore>=0.10.4",
-    "uvicorn>=0.40.0",
+    "camoufox[geoip]>=0.4.11,<1",
+    "curl-cffi>=0.14.0,<1",
+    "eunomia-mcp>=0.3.10",
+    "fastmcp>=2.14,<3",
+    "httpx[http2]>=0.28.1,<1",
+    "mcp[cli]>=1.12.1,<2",
+    "msgspec>=0.20.0,<1",
+    "numpy>=2.4.0,<3",
+    "py-key-value-aio[disk,memory,redis]>=0.3.0,<1",
+    "pydantic-settings>=2.7.0,<3",
+    "pydantic>=2.12.5,<3",
+    "scrapling>=0.3.12,<1",
+    "trafilatura>=2.0.0,<3",
+    "truststore>=0.10.4,<1",
+    "uvicorn>=0.40.0,<1",
 ]
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -57,10 +58,6 @@ packages = ["src/powersearch_mcp"]
 
 [tool.hatch.build.targets.sdist]
 include = ["README.md", "LICENSE", "CONTRIBUTING.md", "SECURITY.md"]
-
-[project.scripts]
-powersearch-mcp = "powersearch_mcp.__main__:main"
-
 
 [dependency-groups]
 dev = [
