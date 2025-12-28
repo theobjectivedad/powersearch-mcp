@@ -23,6 +23,7 @@ PowerSearch MCP helps AI agents search and retrieve content from the public web 
 - ✅ Supports both STDIO and streaming HTTP transports
 - ✅ Health check endpoint for HTTP transport
 - ✅ Extensive [configuration](#configuration) suitable for many deployment scenarios
+- ✅ Authentication & authorization guide for JWT/opaque tokens and Eunomia policies
 
 ## Setup
 
@@ -80,6 +81,29 @@ docker run -d \
     --volume "$(pwd)/searxng.yaml:/settings.yml:ro" \
     searxng/searxng
 ```
+
+## Authentication & Authorization
+
+See the dedicated guide at [docs/authentication.md](docs/authentication.md) for:
+
+- JWT (RemoteAuthProvider + JWTVerifier) and opaque token (IntrospectionTokenVerifier) setup
+- Keycloak-based localhost quickstart values
+- Static Eunomia policy file usage and recommendations
+- Streamable HTTP authentication expectations (STDIO remains unauthenticated)
+
+### Environment variables (authn/authz)
+
+| Variable | Purpose | Example |
+| --- | --- | --- |
+| `FASTMCP_SERVER_AUTH` | Auth provider selector (e.g., `fastmcp.server.auth.RemoteAuthProvider` for JWT, or `fastmcp.server.auth.providers.introspection.IntrospectionTokenVerifier` for opaque tokens). | `fastmcp.server.auth.RemoteAuthProvider` |
+| `FASTMCP_SERVER_AUTH_JWT_JWKS_URI` | JWKS endpoint for JWT signature validation. | `http://127.0.0.1:8080/realms/example/protocol/openid-connect/certs` |
+| `FASTMCP_SERVER_AUTH_JWT_ISSUER` | Expected issuer for tokens. | `http://127.0.0.1:8080/realms/example` |
+| `FASTMCP_SERVER_AUTH_JWT_AUDIENCE` | Expected audience for tokens. | `powersearch-mcp` |
+| `FASTMCP_SERVER_AUTH_JWT_REQUIRED_SCOPES` | Required scopes on the token. | `powersearch:read` |
+| `FASTMCP_SERVER_AUTH_REMOTEAUTHPROVIDER_AUTHORIZATION_SERVERS` | Trusted authorization servers (discovery). | `http://127.0.0.1:8080/realms/example` |
+| `FASTMCP_SERVER_AUTH_REMOTEAUTHPROVIDER_BASE_URL` | Public base URL of the MCP server (no path). | `http://127.0.0.1:8099` |
+| `POWERSEARCH_AUTHZ_POLICY_PATH` | Path to the Eunomia JSON policy file. Server refuses to start if set and missing. | `example-configs/mcp_policies.json` |
+| `POWERSEARCH_ENABLE_AUDIT_LOGGING` | Enable Eunomia audit logging when authz middleware is active. | `true` |
 
 ## How Are Search Results Ranked?
 

@@ -11,7 +11,11 @@
         "editable": [ "." ]
     },
     "deployment": {
-        "transport": "stdio",
+        "transport": "streamable-http",
+        "host": "127.0.0.1",
+        "port": 8099,
+        "path": "/mcp",
+        "log_level": "INFO",
         "env": {
             "POWERSEARCH_LANGUAGE": "en",
             "POWERSEARCH_SAFE_SEARCH": "1",
@@ -38,8 +42,18 @@
             "FASTMCP_MASK_ERROR_DETAILS": "false",
             "FASTMCP_STRICT_INPUT_VALIDATION": "true",
             "FASTMCP_INCLUDE_FASTMCP_META": "true",
+            "FASTMCP_STATELESS_HTTP": "true",
             "FASTMCP_DOCKET_URL": "memory://",
-            "FASTMCP_DOCKET_CONCURRENCY": "10"
+            "FASTMCP_DOCKET_CONCURRENCY": "10",
+
+            "FASTMCP_SERVER_AUTH": "fastmcp.server.auth.RemoteAuthProvider",
+            "FASTMCP_SERVER_AUTH_JWT_JWKS_URI": "http://127.0.0.1:8080/realms/example/protocol/openid-connect/certs",
+            "FASTMCP_SERVER_AUTH_JWT_ISSUER": "http://127.0.0.1:8080/realms/example",
+            "FASTMCP_SERVER_AUTH_JWT_AUDIENCE": "powersearch-mcp",
+            "FASTMCP_SERVER_AUTH_JWT_REQUIRED_SCOPES": "powersearch:read",
+            "FASTMCP_SERVER_AUTH_REMOTEAUTHPROVIDER_AUTHORIZATION_SERVERS": "http://127.0.0.1:8080/realms/example",
+            "FASTMCP_SERVER_AUTH_REMOTEAUTHPROVIDER_BASE_URL": "http://127.0.0.1:8099",
+            "POWERSEARCH_AUTHZ_POLICY_PATH": "example-configs/mcp_policies.json"
         }
     }
 }

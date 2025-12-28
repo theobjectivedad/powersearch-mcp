@@ -42,7 +42,9 @@
             "FASTMCP_MASK_ERROR_DETAILS": "false",
             "FASTMCP_STRICT_INPUT_VALIDATION": "true",
             "FASTMCP_INCLUDE_FASTMCP_META": "true",
-            "FASTMCP_STATELESS_HTTP": "true"
+            "FASTMCP_STATELESS_HTTP": "true",
+            "FASTMCP_DOCKET_URL": "memory://",
+            "FASTMCP_DOCKET_CONCURRENCY": "10"
         }
     }
 }

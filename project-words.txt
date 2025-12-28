@@ -13,6 +13,8 @@ DUPLCHECK
 errexit
 errorhandling
 ERRORHANDLING
+eunomia
+Eunomia
 fastmcp
 geoip
 github

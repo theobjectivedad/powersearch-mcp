@@ -242,6 +242,17 @@ class ServerSettings(BaseSettings):
         validation_alias=AliasChoices("cache_ttl_sec", "cache_ttl_seconds"),
         description="TTL for cached tool responses (seconds).",
     )
+    authz_policy_path: str | None = Field(
+        default=None,
+        description=(
+            "Path to a Eunomia policy JSON file. When provided and the file exists, "
+            "the Eunomia authorization middleware is enabled."
+        ),
+    )
+    enable_audit_logging: bool = Field(
+        default=True,
+        description="Enable Eunomia audit logging when authorization middleware is active.",
+    )
 
     @model_validator(mode="after")
     def _apply_log_level_default(self) -> ServerSettings:

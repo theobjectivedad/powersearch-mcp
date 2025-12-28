@@ -1,7 +1,10 @@
 """ASGI app factory and MCP wiring for PowerSearch."""
 
+import logging
+from pathlib import Path
 from typing import TYPE_CHECKING, Annotated
 
+from eunomia_mcp import create_eunomia_middleware
 from fastmcp.server import Context, FastMCP
 from fastmcp.server.middleware.caching import ResponseCachingMiddleware
 from fastmcp.server.middleware.error_handling import (
@@ -21,10 +24,13 @@ else:
     Request = object
 
 
+from powersearch_mcp import __version__
 from powersearch_mcp.powersearch import SearchResultRecord
 from powersearch_mcp.powersearch import fetch_url as run_fetch_url
 from powersearch_mcp.powersearch import search as run_search
 from powersearch_mcp.settings import build_key_value_store, server_settings
+
+logger = logging.getLogger(__name__)
 
 mcp = FastMCP(
     name="powersearch",
@@ -34,6 +40,8 @@ mcp = FastMCP(
         "cleaned markdown content. fetch_url(url, fetch_timeout_ms) fetches a single page "
         "and returns cleaned markdown. Use for public web lookups; do not expect internal data."
     ),
+    version=__version__,
+    tasks=True,
 )
 
 mcp.add_middleware(
@@ -78,9 +86,19 @@ if cache_storage is not None:
         )
     )
 
+if server_settings.authz_policy_path:
+    policy_path = Path(server_settings.authz_policy_path).expanduser()
+
+    mcp.add_middleware(
+        create_eunomia_middleware(
+            policy_file=str(policy_path),
+            enable_audit_logging=server_settings.enable_audit_logging,
+        )
+    )
+
 
 @mcp.prompt(title="Internet Search")
-def internet_search_prompt(
+async def internet_search_prompt(
     goal: Annotated[str, Field(description="What you are trying to find")],
     time_range: Annotated[
         str | None,

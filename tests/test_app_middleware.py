@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import importlib
+import os
+from pathlib import Path
 from typing import Callable, Generator
 from unittest.mock import ANY
 
@@ -28,6 +30,11 @@ class StubResponseCachingMiddleware:
         self.kwargs = kwargs
 
 
+class StubEunomiaMiddleware:
+    def __init__(self, **kwargs: object) -> None:
+        self.kwargs = kwargs
+
+
 class StubASGIApp:
     def __init__(self) -> None:
         self.middleware: list[tuple[tuple[object, ...], dict[str, object]]] = []
@@ -37,7 +44,7 @@ class StubASGIApp:
 
 
 class StubMCP:
-    def __init__(self, name: str, instructions: str) -> None:
+    def __init__(self, name: str, instructions: str, **_: object) -> None:
         self.name = name
         self.instructions = instructions
         self.added: list[object] = []
@@ -92,6 +99,11 @@ def _reset_app_module() -> Generator[None, None, None]:
     import powersearch_mcp.app as app_module
 
     yield
+
+    os.environ.pop("POWERSEARCH_AUTHZ_POLICY_PATH", None)
+
+    settings_module = importlib.import_module("powersearch_mcp.settings")
+    importlib.reload(settings_module)
 
     importlib.reload(app_module)
 
@@ -214,3 +226,90 @@ def test_app_adds_caching_when_enabled(
         },
     }
     assert isinstance(caching_mw.kwargs["cache_storage"], MemoryStore)
+
+
+def test_app_adds_eunomia_when_policy_configured(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    policy_path = tmp_path / "policy.json"
+    policy_path.write_text(
+        """
+{
+  "version": "1.0",
+  "name": "test-policy",
+  "rules": [],
+  "default_effect": "deny"
+}
+""".strip(),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setenv("POWERSEARCH_AUTHZ_POLICY_PATH", str(policy_path))
+
+    monkeypatch.setattr("fastmcp.server.FastMCP", StubMCP)
+    monkeypatch.setattr(
+        "fastmcp.server.middleware.logging.LoggingMiddleware",
+        StubLoggingMiddleware,
+    )
+    monkeypatch.setattr(
+        "fastmcp.server.middleware.error_handling.ErrorHandlingMiddleware",
+        StubErrorHandlingMiddleware,
+    )
+    monkeypatch.setattr(
+        "fastmcp.server.middleware.error_handling.RetryMiddleware",
+        StubRetryMiddleware,
+    )
+
+    monkeypatch.setattr(
+        "eunomia_mcp.create_eunomia_middleware",
+        lambda *, policy_file, enable_audit_logging: StubEunomiaMiddleware(
+            policy_file=policy_file,
+            enable_audit_logging=enable_audit_logging,
+        ),
+    )
+
+    settings_module = importlib.import_module("powersearch_mcp.settings")
+    importlib.reload(settings_module)
+
+    app_module = importlib.import_module("powersearch_mcp.app")
+    importlib.reload(app_module)
+
+    mcp = app_module.mcp
+
+    assert isinstance(mcp, StubMCP)
+    assert len(mcp.added) == 4
+
+    eunomia_mw = mcp.added[-1]
+    assert isinstance(eunomia_mw, StubEunomiaMiddleware)
+    assert eunomia_mw.kwargs == {
+        "policy_file": str(policy_path),
+        "enable_audit_logging": True,
+    }
+
+
+def test_app_fails_when_policy_missing(monkeypatch: pytest.MonkeyPatch) -> None:
+    missing = Path("/nonexistent/policy.json")
+    monkeypatch.setenv("POWERSEARCH_AUTHZ_POLICY_PATH", str(missing))
+
+    monkeypatch.setattr("fastmcp.server.FastMCP", StubMCP)
+    monkeypatch.setattr(
+        "fastmcp.server.middleware.logging.LoggingMiddleware",
+        StubLoggingMiddleware,
+    )
+    monkeypatch.setattr(
+        "fastmcp.server.middleware.error_handling.ErrorHandlingMiddleware",
+        StubErrorHandlingMiddleware,
+    )
+    monkeypatch.setattr(
+        "fastmcp.server.middleware.error_handling.RetryMiddleware",
+        StubRetryMiddleware,
+    )
+
+    settings_module = importlib.import_module("powersearch_mcp.settings")
+    importlib.reload(settings_module)
+
+    with pytest.raises((RuntimeError, FileNotFoundError)):
+        app_module = importlib.import_module("powersearch_mcp.app")
+        importlib.reload(app_module)
+
+    monkeypatch.delenv("POWERSEARCH_AUTHZ_POLICY_PATH", raising=False)
