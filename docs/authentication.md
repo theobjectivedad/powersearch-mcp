@@ -27,7 +27,7 @@ This guide explains how to secure PowerSearch MCP for headless MCP clients using
   - `FASTMCP_SERVER_AUTH_JWT_JWKS_URI`
   - `FASTMCP_SERVER_AUTH_JWT_ISSUER`
   - `FASTMCP_SERVER_AUTH_JWT_AUDIENCE`
-  - `FASTMCP_SERVER_AUTH_JWT_REQUIRED_SCOPES` (comma/space/JSON list)
+  - `FASTMCP_SERVER_AUTH_JWT_REQUIRED_SCOPES` (comma/space/JSON list; defaults to `powersearch:read`)
 - RemoteAuth metadata for discovery:
   - `FASTMCP_SERVER_AUTH_REMOTEAUTHPROVIDER_AUTHORIZATION_SERVERS` (list or single URL of trusted issuers)
   - `FASTMCP_SERVER_AUTH_REMOTEAUTHPROVIDER_BASE_URL` (public base URL of the MCP server; defaults to localhost in the example env)
@@ -55,6 +55,7 @@ This guide explains how to secure PowerSearch MCP for headless MCP clients using
 - `FASTMCP_SERVER_AUTH_JWT_ISSUER=...` (realm issuer)
 - `FASTMCP_SERVER_AUTH_JWT_AUDIENCE=powersearch-mcp`
 - `FASTMCP_SERVER_AUTH_JWT_REQUIRED_SCOPES=powersearch:read`
+  - Add `,powersearch:execute` if you want tokens to be able to call tools.
 - `FASTMCP_SERVER_AUTH_REMOTEAUTHPROVIDER_AUTHORIZATION_SERVERS=...` (realm issuer URL)
 - `FASTMCP_SERVER_AUTH_REMOTEAUTHPROVIDER_BASE_URL=http://127.0.0.1:8099`
 - `POWERSEARCH_AUTHZ_POLICY_PATH=example-configs/mcp_policies.json`
@@ -72,8 +73,20 @@ Set `FASTMCP_SERVER_AUTH=fastmcp.server.auth.providers.introspection.Introspecti
 
 - The middleware loads when `POWERSEARCH_AUTHZ_POLICY_PATH` points to an existing JSON policy. The bundled example is [example-configs/mcp_policies.json](example-configs/mcp_policies.json).
 - Default effect should be `deny`; add allow rules for tools/prompts you want exposed.
-- Recommended pattern: scope → allow-list mapping (e.g., `powersearch:read` allows `search`/`fetch_url` and listing prompts/tools). Keep scopes stable so onboarding new clients is IDP-only.
+- Recommended pattern: scope → allow-list mapping. Keep scopes stable so onboarding new clients is IDP-only.
 - Anti-pattern: per-tenant bespoke rules that require frequent policy changes and redeploys. Prefer stable scopes and shared policy where possible.
+
+### Scope behavior with the bundled policy
+
+With `FASTMCP_SERVER_AUTH_JWT_REQUIRED_SCOPES` set to the default `powersearch:read`:
+
+| Token scopes present | Auth gate (JWT required scopes) | Listing tools/prompts | Execute tools (`search`, `fetch_url`) | Execute prompt (`internet_search_prompt`) |
+| --- | --- | --- | --- | --- |
+| `powersearch:read` | ✅ passes | ✅ allowed | ❌ denied (policy requires execute) | ✅ allowed |
+| `powersearch:read, powersearch:execute` | ✅ passes (needs both if configured) | ✅ allowed | ✅ allowed | ✅ allowed |
+
+- To permit tool execution, issue tokens that include `powersearch:execute` **and** set `FASTMCP_SERVER_AUTH_JWT_REQUIRED_SCOPES=powersearch:read,powersearch:execute` so the auth gate enforces both.
+- If a token is missing any scope listed in `FASTMCP_SERVER_AUTH_JWT_REQUIRED_SCOPES`, the request is rejected before Eunomia policies run.
 
 ## Operations and expectations
 

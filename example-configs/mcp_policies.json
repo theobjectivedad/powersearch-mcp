@@ -1,11 +1,11 @@
 {
   "version": "1.0",
-  "name": "powersearch-generated-policy",
-  "description": "Generated policy for MCP server: powersearch",
+  "name": "powersearch-default-policy",
+  "description": "Default Eunomia policy for PowerSearch MCP. Requires powersearch:read to list tools/prompts and powersearch:execute to call tools.",
   "rules": [
     {
-      "name": "list-tools",
-      "description": "List all tools (tip: exclude from `attributes.name`'s values the ones that you want to hide from the MCP client)",
+      "name": "list-powersearch-tools",
+      "description": "Allow clients with powersearch:read to list exposed tools.",
       "effect": "allow",
       "principal_conditions": [
         {
@@ -34,14 +34,14 @@
       ]
     },
     {
-      "name": "execute-tools-search",
-      "description": "Execute tools:search (tip: add additional conditions on `attributes.arguments.[:path]` to restrict this execution)",
+      "name": "execute-powersearch-search",
+      "description": "Allow clients with powersearch:execute to call the search tool.",
       "effect": "allow",
       "principal_conditions": [
         {
           "path": "claims.scope",
           "operator": "contains",
-          "value": "powersearch:read"
+          "value": "powersearch:execute"
         }
       ],
       "resource_conditions": [
@@ -61,14 +61,14 @@
       ]
     },
     {
-      "name": "execute-tools-fetch_url",
-      "description": "Execute tools:fetch_url (tip: add additional conditions on `attributes.arguments.[:path]` to restrict this execution)",
+      "name": "execute-powersearch-fetch-url",
+      "description": "Allow clients with powersearch:execute to call the fetch_url tool.",
       "effect": "allow",
       "principal_conditions": [
         {
           "path": "claims.scope",
           "operator": "contains",
-          "value": "powersearch:read"
+          "value": "powersearch:execute"
         }
       ],
       "resource_conditions": [
@@ -88,8 +88,8 @@
       ]
     },
     {
-      "name": "list-prompts",
-      "description": "List all prompts (tip: exclude from `attributes.name`'s values the ones that you want to hide from the MCP client)",
+      "name": "list-powersearch-prompts",
+      "description": "Allow clients with powersearch:read to list exposed prompts.",
       "effect": "allow",
       "principal_conditions": [
         {
@@ -117,8 +117,8 @@
       ]
     },
     {
-      "name": "execute-prompts-internet_search_prompt",
-      "description": "Execute prompts:internet_search_prompt (tip: add additional conditions on `attributes.arguments.[:path]` to restrict this execution)",
+      "name": "execute-powersearch-internet-search-prompt",
+      "description": "Allow clients with powersearch:read to call the internet_search_prompt prompt.",
       "effect": "allow",
       "principal_conditions": [
         {

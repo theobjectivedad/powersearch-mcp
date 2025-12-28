@@ -36,6 +36,7 @@ pypi
 pyproject
 pytest
 pytests
+REMOTEAUTHPROVIDER
 safesearch
 scrapling
 Scrapling
