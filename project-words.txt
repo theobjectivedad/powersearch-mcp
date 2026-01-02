@@ -27,6 +27,8 @@ noexec
 nosuid
 nounset
 numpy
+oidc
+OOTB
 pipefail
 powersearch
 POWERSEARCH
