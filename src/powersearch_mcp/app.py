@@ -4,7 +4,6 @@ import logging
 from pathlib import Path
 from typing import TYPE_CHECKING, Annotated
 
-from eunomia_mcp import create_eunomia_middleware
 from fastmcp.server import Context, FastMCP
 from fastmcp.server.middleware.caching import ResponseCachingMiddleware
 from fastmcp.server.middleware.error_handling import (
@@ -28,12 +27,16 @@ from powersearch_mcp import __version__
 from powersearch_mcp.powersearch import SearchResultRecord
 from powersearch_mcp.powersearch import fetch_url as run_fetch_url
 from powersearch_mcp.powersearch import search as run_search
-from powersearch_mcp.settings import build_key_value_store, server_settings
+from powersearch_mcp.settings import (
+    build_key_value_store,
+    server_settings,
+)
 
 logger = logging.getLogger(__name__)
 
+
 mcp = FastMCP(
-    name="powersearch",
+    name="powersearch-mcp",
     instructions=(
         "Internet search plus page fetch. "
         "search(query, time_range=day|month|year) returns results with title, url, and "
@@ -43,6 +46,7 @@ mcp = FastMCP(
     version=__version__,
     tasks=True,
 )
+
 
 mcp.add_middleware(
     LoggingMiddleware(
@@ -94,12 +98,9 @@ if server_settings.authz_policy_path:
         logger.error(message)
         raise FileNotFoundError(message)
 
-    mcp.add_middleware(
-        create_eunomia_middleware(
-            policy_file=str(policy_path),
-            enable_audit_logging=server_settings.enable_audit_logging,
-        )
-    )
+    from powersearch_mcp.authorization_middleware import factory
+
+    mcp.add_middleware(factory(policy_file=str(policy_path)))
 
 
 @mcp.prompt(title="Internet Search")

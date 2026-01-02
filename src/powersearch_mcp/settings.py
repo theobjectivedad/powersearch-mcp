@@ -83,7 +83,7 @@ class PowerSearchSettings(BaseSettings):
         ),
     )
     content_limit: int | None = Field(
-        default=4000,
+        default=None,
         ge=0,
         description="Trim each result's content to this many characters; None to disable.",
     )

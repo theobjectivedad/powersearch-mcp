@@ -242,6 +242,9 @@ async def search(  # noqa: C901, PLR0912, PLR0915
             ]
 
             if fetch_tasks:
+                # Insight - I would love to do MCP progress reporting here.
+                # However, since we're doing async I/O, it adds too much
+                # unwanted complexity.
                 markdown_results = await asyncio.gather(
                     *fetch_tasks, return_exceptions=True
                 )
@@ -262,11 +265,6 @@ async def search(  # noqa: C901, PLR0912, PLR0915
 
             for i, searxgn_result in enumerate(filtered_searxgn_results):
                 search_results[i].content = searxgn_result["content"]
-
-    if settings.content_limit is not None:
-        for result in search_results:
-            if len(result.content) > settings.content_limit:
-                result.content = result.content[: settings.content_limit]
 
     return search_results
 
@@ -335,10 +333,13 @@ async def _fetch_url(
         deduplicate=settings.trafilatura_deduplicate,
         config=config,
     )
-    if not markdown_content:
+
+    if markdown_content:
+        markdown_content = markdown_content.strip()
+    else:
         if ctx:
             await ctx.error(f"No content extracted from {url}")
-        raise FetchError(f"No content extracted from {url}")
+        markdown_content = ""
 
     markdown_content = re.sub(r"<[^>]+>", "", markdown_content)
     markdown_content = re.sub(r"\n{3,}", "\n\n", markdown_content)
@@ -347,7 +348,11 @@ async def _fetch_url(
         "",
         markdown_content,
     )
-    return markdown_content.strip()
+
+    if settings.content_limit is not None:
+        markdown_content = markdown_content[: settings.content_limit]
+
+    return markdown_content
 
 
 async def fetch_url(

@@ -1,0 +1,23 @@
+{
+  "version": "1.0",
+  "name": "powersearch-mcp-policy",
+  "description": "Example Eunomia policy that allows full access for users in the powersearch-mcp-users role.",
+  "rules": [
+    {
+      "name": "Check required role",
+      "description": "",
+      "effect": "allow",
+      "principal_conditions": [
+        {
+          "path": "attributes.realm_access.roles",
+          "operator": "contains",
+          "value": "powersearch-mcp-users"
+        }
+      ],
+      "actions": [
+        "list", "execute"
+      ]
+    }
+  ],
+  "default_effect": "deny"
+}

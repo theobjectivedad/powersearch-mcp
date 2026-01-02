@@ -10,6 +10,7 @@ cffi
 duckduckgo
 duplcheck
 DUPLCHECK
+enumomia
 errexit
 errorhandling
 ERRORHANDLING

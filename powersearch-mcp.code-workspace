@@ -118,15 +118,30 @@
                     "justMyCode": false
                 },
                 {
-                    "name": "Power Search Agent",
+                    "name": "Demo Client",
                     "type": "debugpy",
                     "request": "launch",
-                    "module": "powersearch_mcp",
+                    "program": "scripts/demo_client.py",
                     "console": "integratedTerminal",
                     "cwd": "${workspaceFolder}",
-                    "envFile": "${workspaceFolder}/.env",
                     "justMyCode": false
                 },
+                {
+                    "name": "Power Search HTTP",
+                    "type": "debugpy",
+                    "request": "launch",
+                    "module": "fastmcp.cli",
+                    "args": [
+                        "run",
+                        "fastmcp-http.json",
+                        "--skip-source",
+                        "--skip-env"
+                    ],
+                    "console": "integratedTerminal",
+                    "cwd": "${workspaceFolder}",
+                    "justMyCode": false
+                },
+
             ],
             "compounds": [ ]
         },

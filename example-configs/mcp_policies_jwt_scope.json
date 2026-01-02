@@ -1,0 +1,82 @@
+{
+  "version": "1.0",
+  "name": "powersearch-mcp-policy",
+  "description": "Example Eunomia policy that allows fine-grained access for clients with specific JWT scopes",
+  "rules": [
+    {
+      "name": "list-prompts",
+      "description": "Allow clients to list exposed prompts.",
+      "effect": "allow",
+      "principal_conditions": [
+        {
+          "path": "attributes.scope",
+          "operator": "contains",
+          "value": "powersearch:mcp:perm:read"
+        }
+      ],
+      "resource_conditions": [
+        {
+          "path": "attributes.component_type",
+          "operator": "equals",
+          "value": "prompts"
+        }
+      ],
+      "actions": [
+        "list"
+      ]
+    },
+    {
+      "name": "list-tools",
+      "description": "Allow clients to list exposed tools.",
+      "effect": "allow",
+      "principal_conditions": [
+        {
+          "path": "attributes.scope",
+          "operator": "contains",
+          "value": "powersearch:mcp:perm:read"
+        }
+      ],
+      "resource_conditions": [
+        {
+          "path": "attributes.component_type",
+          "operator": "equals",
+          "value": "tools"
+        }
+      ],
+      "actions": [
+        "list"
+      ]
+    },
+    {
+      "name": "execute-tools",
+      "description": "Allow clients to execute the tools.",
+      "effect": "allow",
+      "principal_conditions": [
+        {
+          "path": "attributes.scope",
+          "operator": "contains",
+          "value": "powersearch:mcp:perm:execute"
+        }
+      ],
+      "resource_conditions": [
+        {
+          "path": "attributes.component_type",
+          "operator": "equals",
+          "value": "tools"
+        },
+        {
+          "path": "attributes.name",
+          "operator": "in",
+          "value": [
+            "search",
+            "fetch_url"
+          ]
+        }
+      ],
+      "actions": [
+        "execute"
+      ]
+    }
+  ],
+  "default_effect": "deny"
+}
