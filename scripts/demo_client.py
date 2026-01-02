@@ -42,7 +42,7 @@ async def main() -> None:
 
     To use JWT instead of OAuth2, set ``client_config`` to:
 
-    ````json
+    ```json
     {
       "mcpServers": {
         "powersearch": {
@@ -53,7 +53,7 @@ async def main() -> None:
         }
       }
     }
-    ````
+    ```
     """
 
     client_config = {

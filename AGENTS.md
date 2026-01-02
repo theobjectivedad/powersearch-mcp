@@ -70,7 +70,7 @@ uv run fastmcp run fastmcp-http.json --skip-source --skip-env
 
 ### Testing
 
-* New code requires new tests; bug fixes must include a regression test (write it to fail first).
+* Determine whether new code requires new tests; bug fixes must include a regression test (write it to fail first).
 * Tests must be deterministic and independent; replace external systems with fakes/contract tests.
 * Include ≥1 happy path and ≥1 failure path in pytests.
 * Proactively assess risks from concurrency/locks/retries (duplication, deadlocks, etc.).

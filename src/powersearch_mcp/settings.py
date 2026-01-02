@@ -275,6 +275,18 @@ class ServerSettings(BaseSettings):
                 ) from exc
         return self
 
+    @model_validator(mode="after")
+    def _require_auth_when_authorization_enabled(self) -> ServerSettings:
+        if self.authz_policy_path:
+            auth_provider = os.getenv("FASTMCP_SERVER_AUTH", "").strip()
+
+            if not auth_provider:
+                raise ValueError(
+                    "POWERSEARCH_AUTHZ_POLICY_PATH is set, but FASTMCP_SERVER_AUTH is not configured; enable authentication before enabling authorization."
+                )
+
+        return self
+
     def log_level_value(self) -> int:
         """Convert configured log level to a numeric value for logging APIs."""
 

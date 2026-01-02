@@ -11,7 +11,7 @@ before constructing a ``PrincipalCheck`` for policy evaluation.
 
 from collections.abc import Mapping, Sequence
 
-from eunomia.config import settings as enumomia_settings
+from eunomia.config import settings as eunomia_settings
 from eunomia.server import EunomiaServer
 from eunomia_core import schemas
 from eunomia_mcp.bridge import EunomiaMode
@@ -84,8 +84,8 @@ class EunomiaJWTPrincipalMiddleware(EunomiaMcpMiddleware):  # type: ignore
 
 
 def factory(policy_file: str) -> EunomiaJWTPrincipalMiddleware:
-    enumomia_settings.ENGINE_SQL_DATABASE = False
-    enumomia_settings.FETCHERS = {}
+    eunomia_settings.ENGINE_SQL_DATABASE = False
+    eunomia_settings.FETCHERS = {}
 
     server = EunomiaServer()
     policy = load_policy_config(policy_file)

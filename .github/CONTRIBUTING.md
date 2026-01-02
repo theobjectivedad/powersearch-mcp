@@ -31,7 +31,7 @@ Thanks for investing your time into PowerSearch MCP! This guide covers how to se
 
 ### Authorization policy upkeep
 
-- The Eunomia policy (`example-configs/mcp_policies.json`) must reflect all exposed tools/prompts.
+- The Eunomia policy (`example-configs/mcp_policies_jwt_scope.json`) must reflect all exposed tools/prompts.
 - When adding, renaming, or removing tools/prompts, update the policy and any scope requirements to keep access rules accurate.
 - Keep scopes stable when possible (`powersearch:read` by default) to avoid churn for clients.
 
