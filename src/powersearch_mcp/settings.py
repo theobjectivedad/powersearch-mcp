@@ -83,7 +83,7 @@ class PowerSearchSettings(BaseSettings):
         ),
     )
     content_limit: int | None = Field(
-        default=4000,
+        default=None,
         ge=0,
         description="Trim each result's content to this many characters; None to disable.",
     )
@@ -242,6 +242,18 @@ class ServerSettings(BaseSettings):
         validation_alias=AliasChoices("cache_ttl_sec", "cache_ttl_seconds"),
         description="TTL for cached tool responses (seconds).",
     )
+    authz_policy_path: str | None = Field(
+        default=None,
+        description=(
+            "Path to a Eunomia policy JSON file. When provided, the file must exist "
+            "or the server will fail to start. When omitted, authorization middleware "
+            "is disabled."
+        ),
+    )
+    enable_audit_logging: bool = Field(
+        default=True,
+        description="Enable Eunomia audit logging when authorization middleware is active.",
+    )
 
     @model_validator(mode="after")
     def _apply_log_level_default(self) -> ServerSettings:
@@ -261,6 +273,18 @@ class ServerSettings(BaseSettings):
                 raise ValueError(
                     "POWERSEARCH_CACHE_TTL_SEC must be an int"
                 ) from exc
+        return self
+
+    @model_validator(mode="after")
+    def _require_auth_when_authorization_enabled(self) -> ServerSettings:
+        if self.authz_policy_path:
+            auth_provider = os.getenv("FASTMCP_SERVER_AUTH", "").strip()
+
+            if not auth_provider:
+                raise ValueError(
+                    "POWERSEARCH_AUTHZ_POLICY_PATH is set, but FASTMCP_SERVER_AUTH is not configured; enable authentication before enabling authorization."
+                )
+
         return self
 
     def log_level_value(self) -> int:

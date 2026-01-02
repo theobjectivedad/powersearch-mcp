@@ -1,5 +1,7 @@
 """ASGI app factory and MCP wiring for PowerSearch."""
 
+import logging
+from pathlib import Path
 from typing import TYPE_CHECKING, Annotated
 
 from fastmcp.server import Context, FastMCP
@@ -21,20 +23,30 @@ else:
     Request = object
 
 
+from powersearch_mcp import __version__
 from powersearch_mcp.powersearch import SearchResultRecord
 from powersearch_mcp.powersearch import fetch_url as run_fetch_url
 from powersearch_mcp.powersearch import search as run_search
-from powersearch_mcp.settings import build_key_value_store, server_settings
+from powersearch_mcp.settings import (
+    build_key_value_store,
+    server_settings,
+)
+
+logger = logging.getLogger(__name__)
+
 
 mcp = FastMCP(
-    name="powersearch",
+    name="powersearch-mcp",
     instructions=(
         "Internet search plus page fetch. "
         "search(query, time_range=day|month|year) returns results with title, url, and "
         "cleaned markdown content. fetch_url(url, fetch_timeout_ms) fetches a single page "
         "and returns cleaned markdown. Use for public web lookups; do not expect internal data."
     ),
+    version=__version__,
+    tasks=True,
 )
+
 
 mcp.add_middleware(
     LoggingMiddleware(
@@ -78,9 +90,22 @@ if cache_storage is not None:
         )
     )
 
+if server_settings.authz_policy_path:
+    policy_path = Path(server_settings.authz_policy_path).expanduser()
+
+    if not policy_path.is_file():
+        message = f"Eunomia policy file not found at {policy_path}"
+        logger.error(message)
+        raise FileNotFoundError(message)
+
+    from powersearch_mcp.authorization_middleware import factory
+
+    mcp.add_middleware(factory(policy_file=str(policy_path)))
+
 
 @mcp.prompt(title="Internet Search")
-def internet_search_prompt(
+# tasks=True requires async prompts/tools even when no awaits are used.
+async def internet_search_prompt(
     goal: Annotated[str, Field(description="What you are trying to find")],
     time_range: Annotated[
         str | None,

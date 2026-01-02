@@ -10,9 +10,12 @@ cffi
 duckduckgo
 duplcheck
 DUPLCHECK
+enumomia
 errexit
 errorhandling
 ERRORHANDLING
+eunomia
+Eunomia
 fastmcp
 geoip
 github
@@ -24,6 +27,8 @@ noexec
 nosuid
 nounset
 numpy
+oidc
+OOTB
 pipefail
 powersearch
 POWERSEARCH
@@ -34,6 +39,7 @@ pypi
 pyproject
 pytest
 pytests
+REMOTEAUTHPROVIDER
 safesearch
 scrapling
 Scrapling

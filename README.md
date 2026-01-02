@@ -11,18 +11,25 @@
 ![PyPi version](https://img.shields.io/pypi/v/powersearch-mcp?label=PyPi%20Version)
 ![PyPi downloads](https://img.shields.io/pypi/dm/powersearch-mcp?label=PyPi%20Downloads)
 
-PowerSearch MCP helps AI agents search and retrieve content from the public web with fewer broken fetches, less boilerplate, and clean outputs ready to cite.
+PowerSearch MCP helps AI agents search and retrieve content from the public web with fewer broken fetches and clean, AI-friendly outputs ready to cite.
 
-**Features:**
+**Feature Roadmap:**
 
-- ✅ [SearXNG](https://docs.searxng.org/)-backed meta search with configurable engines, language, safe-search, and pagination.
+- ✅ [SearXNG](https://docs.searxng.org/)-backed meta search with configurable engines, language, safe-search, and pagination
 - ✅ Strong anti-bot fetching implementation via [Scrapling](https://github.com/D4Vinci/Scrapling) and [Camoufox](https://camoufox.com)
 - ✅ Search response caching at the tool-level to memory, disk, and Redis storage backends
 - ✅ Automatic retries with exponential backoff for both search and fetch operations
 - ✅ AI Agent-friendly responses: HTML pages are converted to markdown automatically via [Trafilatura](https://github.com/adbar/trafilatura)
-- ✅ Supports both STDIO and streaming HTTP transports
+- ✅ Support for STDIO and streaming HTTP transports
 - ✅ Health check endpoint for HTTP transport
 - ✅ Extensive [configuration](#configuration) suitable for many deployment scenarios
+- ✅ Authentication support for both JWT and opaque tokens
+- ✅ Authorization support for embedded [Eunomia](https://github.com/whataboutyou-ai/eunomia) policies
+- 🗓️ (Future) Auto summarization of search results via [MCP sampling](https://modelcontextprotocol.io/specification/2025-06-18/client/sampling)
+- 🗓️ (Future) Client selectable synchronous (current behavior) or asynchronous [SEP-1686](https://modelcontextprotocol.io/specification/2025-11-25/basic/utilities/tasks) execution for search / fetch tools
+- 🗓️ (Future) Containerization, publish public image
+- 🗓️ (Future) Prometheus metrics exporter
+- 🗓️ (Future) Helm chart
 
 ## Setup
 
@@ -142,6 +149,8 @@ PowerSearch reads environment variables with the `POWERSEARCH_` prefix (also res
 | `POWERSEARCH_RETRY_BASE_DELAY` | Initial delay between retries (seconds). | Tune for backoff aggressiveness. |
 | `POWERSEARCH_RETRY_MAX_DELAY` | Upper bound on backoff delay (seconds). | Prevent excessively long waits. |
 | `POWERSEARCH_RETRY_BACKOFF_MULTIPLIER` | Exponential backoff multiplier. | Lower for gentler backoff; raise for faster escalation. |
+| `FASTMCP_DOCKET_URL` | Session docket store for Streamable HTTP (e.g., `memory://`, `redis://host:port/db`). | Switch to Redis or another backend when you need persistent/distributed HTTP sessions. |
+| `FASTMCP_DOCKET_CONCURRENCY` | Max concurrent docket operations. | Increase for higher HTTP session throughput; lower to limit resource use. |
 
 ### Caching
 
@@ -151,3 +160,22 @@ PowerSearch can cache tool responses (search and fetch_url) via FastMCP's respon
 | --- | --- | --- |
 | `POWERSEARCH_CACHE` | Storage backend selector: `memory`, `null` (no-op, good for tests), `file:///path/to/dir`, or `redis://host:port/db`. Empty/`None` disables caching. | Enable for repeat queries or to avoid refetching the same URLs. Use `memory` for local dev, `file://` for lightweight persistence, and `redis://` for shared/distributed deployments. |
 | `POWERSEARCH_CACHE_TTL_SEC` (alias: `POWERSEARCH_CACHE_TTL_SECONDS`) | TTL for cached tool responses (seconds). Defaults to 3600. | Shorten for fresher results; lengthen when upstream data changes rarely. |
+
+### Authentication & Authorization
+
+See [docs/auth.md](docs/auth.md) for full details.
+
+| Setting | What it does | When to change |
+| --- | --- | --- |
+| `FASTMCP_SERVER_AUTH` | Selects the FastMCP auth provider (e.g., `fastmcp.server.auth.providers.auth0.Auth0Provider` for interactive OAuth, `fastmcp.server.auth.providers.jwt.JWTVerifier` for headless JWT validation). | Choose the provider that matches how your tokens are obtained (interactive vs headless). |
+| `FASTMCP_SERVER_AUTH_AUTH0_CONFIG_URL` | OIDC discovery URL for Auth0/Keycloak (scenario 1). | Set when using the interactive OAuth flow so clients can discover the IdP. |
+| `FASTMCP_SERVER_AUTH_AUTH0_CLIENT_ID` | OAuth client ID registered for PowerSearch MCP. | Provide when using Auth0/Keycloak OAuth. |
+| `FASTMCP_SERVER_AUTH_AUTH0_AUDIENCE` | API audience that tokens must target. | Set to the audience configured in your IdP for PowerSearch MCP. |
+| `FASTMCP_SERVER_AUTH_AUTH0_CLIENT_SECRET` | OAuth client secret for the MCP server registration. | Required for Auth0/Keycloak OAuth server-side flow. |
+| `FASTMCP_SERVER_AUTH_AUTH0_BASE_URL` | Public base URL of the MCP server (no path) for OAuth redirects. | Set when using the interactive OAuth flow. |
+| `FASTMCP_SERVER_AUTH_JWT_JWKS_URI` | JWKS endpoint used to verify JWT signatures (scenario 2). | Set for headless JWT validation when tokens are pre-issued. |
+| `FASTMCP_SERVER_AUTH_JWT_ISSUER` | Expected `iss` claim for JWTs. | Match to your identity provider's issuer to block tokens from other issuers. |
+| `FASTMCP_SERVER_AUTH_JWT_AUDIENCE` | Expected `aud` claim for JWTs. | Set to the audience your IdP issues for this server. |
+| `FASTMCP_SERVER_AUTH_JWT_REQUIRED_SCOPES` | Scopes that must appear on accepted JWTs. | Use to enforce least privilege for headless JWT flows. |
+| `POWERSEARCH_AUTHZ_POLICY_PATH` | Path to the Eunomia JSON policy file; server refuses to start if set and missing. | Provide when enabling authorization and point at the policy you want enforced. |
+| `POWERSEARCH_ENABLE_AUDIT_LOGGING` | Turns on Eunomia audit logging when authz middleware is enabled. | Enable for compliance or incident review; leave off to reduce log volume. |
