@@ -373,6 +373,7 @@ __all__ = [
     "FetchError",
     "SearchError",
     "SearchResultRecord",
+    "StealthyFetcher",
     "_filter_scores_by_percentile",
     "_filter_scores_by_top_k",
     "fetch_url",

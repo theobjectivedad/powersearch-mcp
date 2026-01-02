@@ -9,7 +9,7 @@ recursively converts list-valued claims into whitespace-separated strings
 before constructing a ``PrincipalCheck`` for policy evaluation.
 """
 
-from typing import Any
+from collections.abc import Mapping, Sequence
 
 from eunomia.config import settings as enumomia_settings
 from eunomia.server import EunomiaServer
@@ -22,11 +22,23 @@ from mcp.server.auth.middleware.auth_context import auth_context_var
 
 from powersearch_mcp.settings import server_settings
 
+type ClaimValue = (
+    str
+    | int
+    | float
+    | bool
+    | None
+    | Mapping[str, "ClaimValue"]
+    | Sequence["ClaimValue"]
+)
 
-def _stringify_claim_lists(value: Any) -> Any:
-    if isinstance(value, dict):
+
+def _stringify_claim_lists(value: ClaimValue) -> ClaimValue:
+    if isinstance(value, Mapping):
         return {k: _stringify_claim_lists(v) for k, v in value.items()}
-    if isinstance(value, list):
+    if isinstance(value, Sequence) and not isinstance(
+        value, (str, bytes, bytearray)
+    ):
         normalized_items = [_stringify_claim_lists(item) for item in value]
         return " ".join(str(item) for item in normalized_items)
     return value
@@ -57,12 +69,17 @@ class EunomiaJWTPrincipalMiddleware(EunomiaMcpMiddleware):  # type: ignore
         # eunomia.engine.evaluator.apply_operator(). As a workaround, we need
         # to convert claims that contain a list into strings separated by
         # whitespace.
-
         normalized_claims = _stringify_claim_lists(claims)
+        if not isinstance(normalized_claims, Mapping):
+            raise FastMCPError(
+                "Normalized claims are not a mapping; ensure claim coercion preserved key/value pairs."
+            )
+
+        normalized_claims_dict = dict(normalized_claims)
 
         return schemas.PrincipalCheck(
-            uri=f"client:{normalized_claims.get('sub', 'unknown')}",
-            attributes=normalized_claims,
+            uri=f"client:{normalized_claims_dict.get('sub', 'unknown')}",
+            attributes=normalized_claims_dict,
         )
 
 

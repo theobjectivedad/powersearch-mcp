@@ -38,7 +38,24 @@ async def progress_handler(
 
 
 async def main() -> None:
-    # Streamable HTTP with OAuth2 authentication
+    """Connect to PowerSearch with streamable HTTP.
+
+    To use JWT instead of OAuth2, set ``client_config`` to:
+
+    ````json
+    {
+      "mcpServers": {
+        "powersearch": {
+          "transport": "streamable-http",
+          "url": "http://127.0.0.1:8099/mcp",
+          "headers": {"Authorization": "Bearer token"},
+          "auth": "THE_JWT_ACCESS_TOKEN"
+        }
+      }
+    }
+    ````
+    """
+
     client_config = {
         "mcpServers": {
             "powersearch": {
@@ -49,18 +66,6 @@ async def main() -> None:
         }
     }
 
-    # Streamable HTTP with JWT authentication
-    # client_config = {  # noqa: ERA001
-    #     "mcpServers": {
-    #         "powersearch": {
-    #             "transport": "streamable-http",
-    #             "url": "http://127.0.0.1:8099/mcp",
-    #             "headers": {"Authorization": "Bearer token"},
-    #             "auth": "THE_JWT_ACCESS_TOKEN",
-    #         },
-    #     }
-    # }
-
     client = Client(
         transport=client_config,
         auto_initialize=True,
@@ -70,7 +75,6 @@ async def main() -> None:
     )
 
     async with client:
-        # Basic server interaction
         await client.ping()
 
         # DEBUG only, uncomment to print the access token

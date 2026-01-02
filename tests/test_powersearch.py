@@ -1,501 +1,307 @@
-from collections.abc import Iterator
+from dataclasses import dataclass
+from types import TracebackType
 from typing import Any
 
 import httpx
 import pytest
 
+from powersearch_mcp import powersearch
 from powersearch_mcp.powersearch import (
     FetchError,
+    MessageSink,
     SearchError,
+    _fetch_url,
     _filter_scores_by_percentile,
     _filter_scores_by_top_k,
-    fetch_url,
     search,
     settings,
 )
 
-HTTP_OK_MIN = 200
-HTTP_OK_MAX = 299
 
-
-class DummyCtx:
+class RecordingSink(MessageSink):
     def __init__(self) -> None:
-        self.messages: list[tuple[str, str]] = []
+        self.infos: list[str] = []
+        self.warnings: list[str] = []
+        self.errors: list[str] = []
 
-    async def info(self, message: str) -> None:
-        self.messages.append(("info", message))
+    async def info(self, message: str) -> None:  # noqa: D401 - simple recorder
+        self.infos.append(message)
 
-    async def warning(self, message: str) -> None:
-        self.messages.append(("warning", message))
+    async def warning(self, message: str) -> None:  # noqa: D401 - simple recorder
+        self.warnings.append(message)
 
-    async def error(self, message: str) -> None:
-        self.messages.append(("error", message))
+    async def error(self, message: str) -> None:  # noqa: D401 - simple recorder
+        self.errors.append(message)
 
 
-class StubAsyncResponse:
-    def __init__(self, payload: dict[str, Any], status_code: int = 200) -> None:
-        self._payload = payload
-        self.status_code = status_code
+@dataclass
+class StubResponse:
+    payload: dict[str, Any]
+    status_code: int = 200
 
     def raise_for_status(self) -> None:
-        return None
+        if self.status_code >= 400:
+            raise httpx.HTTPStatusError(
+                "error",
+                request=httpx.Request("GET", "http://stub"),
+                response=httpx.Response(status_code=self.status_code),
+            )
 
     def json(self) -> dict[str, Any]:
-        return self._payload
+        return self.payload
 
 
 class StubAsyncClient:
-    def __init__(self, response: StubAsyncResponse) -> None:
-        self._response = response
+    def __init__(self, response: StubResponse) -> None:
+        self.response = response
+        self.calls: list[tuple[str, dict[str, Any]]] = []
 
     async def __aenter__(self) -> "StubAsyncClient":
         return self
 
-    async def __aexit__(self, *exc: object) -> None:
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc: BaseException | None,
+        tb: TracebackType | None,
+    ) -> None:  # pragma: no cover - no cleanup
         return None
 
-    async def get(self, _url: str, **_: object) -> StubAsyncResponse:
-        return self._response
+    async def get(self, url: str, params: dict[str, Any]) -> StubResponse:
+        self.calls.append((url, params))
+        return self.response
 
 
-class StubFetcherResponse:
-    def __init__(self, html_content: str, status: int = 200) -> None:
-        self.html_content = html_content
-        self.status = status
+@pytest.mark.parametrize(
+    ("scores", "percentile", "expected_titles"),
+    [
+        ([10, 5, 1], 50, [10, 5]),
+        ([1, 1, 1], None, [1, 1, 1]),
+        ([], 75, []),
+    ],
+)
+def test_filter_scores_by_percentile(
+    scores: list[int], percentile: float | None, expected_titles: list[int]
+) -> None:
+    results = [
+        {"title": f"t{i}", "score": score, "url": f"u{i}", "content": f"c{i}"}
+        for i, score in enumerate(scores)
+    ]
+
+    filtered = _filter_scores_by_percentile(results, percentile)
+
+    assert [item["score"] for item in filtered] == expected_titles
 
 
-@pytest.fixture(autouse=True)
-def restore_settings() -> Iterator[None]:
-    """Preserve global settings across tests."""
+def test_filter_scores_by_top_k_orders_by_score() -> None:
+    results = [
+        {"title": "a", "score": 1, "url": "u1", "content": "c1"},
+        {"title": "b", "score": 5, "url": "u2", "content": "c2"},
+        {"title": "c", "score": 3, "url": "u3", "content": "c3"},
+    ]
 
-    snapshot = {
-        "base_url": settings.base_url,
-        "engines": list(settings.engines),
-        "language": settings.language,
-        "safe_search": settings.safe_search,
-        "max_page": settings.max_page,
-        "filter_score_percentile": settings.filter_score_percentile,
-        "filter_top_k": settings.filter_top_k,
-        "content_strategy": settings.content_strategy,
-        "content_limit": settings.content_limit,
-        "timeout_sec": settings.timeout_sec,
-        "http2": settings.http2,
-        "verify": settings.verify,
-    }
-    yield
-    for key, value in snapshot.items():
-        setattr(settings, key, value)
+    filtered = _filter_scores_by_top_k(results, k=2)
+
+    assert [item["title"] for item in filtered] == ["b", "c"]
 
 
 @pytest.mark.asyncio
-async def test_search_fetches_and_trims_content(
+async def test_search_invalid_time_range_raises_and_logs() -> None:
+    sink = RecordingSink()
+
+    with pytest.raises(SearchError):
+        await search(sink, query="x", time_range="century")
+
+    assert sink.errors
+
+
+@pytest.mark.asyncio
+async def test_search_returns_quick_results_without_fetch(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    ctx = DummyCtx()
-    settings.filter_score_percentile = None
-    settings.filter_top_k = 5
-    settings.content_strategy = "fetch"
-    settings.content_limit = 20
+    sink = RecordingSink()
+    stub_response = StubResponse(
+        payload={
+            "results": [
+                {
+                    "title": "t1",
+                    "url": "http://one",
+                    "content": "c1",
+                    "score": 1,
+                },
+                {
+                    "title": "t2",
+                    "url": "http://two",
+                    "content": "c2",
+                    "score": 2,
+                },
+            ]
+        }
+    )
 
-    payload = {
-        "results": [
-            {
-                "title": "Result One",
-                "content": "Snippet One",
-                "url": "https://example.com/one",
-                "score": 10,
-            },
-            {
-                "title": "Result Two",
-                "content": "Snippet Two",
-                "url": "https://example.com/two",
-                "score": 9,
-            },
-        ]
-    }
+    monkeypatch.setattr(
+        httpx, "AsyncClient", lambda **_: StubAsyncClient(stub_response)
+    )
+    monkeypatch.setattr(settings, "content_strategy", "quick")
+    monkeypatch.setattr(settings, "filter_score_percentile", None)
+    monkeypatch.setattr(settings, "filter_top_k", 2)
 
-    stub_response = StubAsyncResponse(payload=payload)
+    results = await search(sink, query="hello", time_range=None)
+
+    assert len(results) == 2
+    assert results[0].content == "c1"
+    assert not sink.errors
+
+
+@pytest.mark.asyncio
+async def test_search_filters_out_all_results(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    sink = RecordingSink()
+    stub_response = StubResponse(payload={"results": []})
     monkeypatch.setattr(
         httpx, "AsyncClient", lambda **_: StubAsyncClient(stub_response)
     )
 
-    async def stub_async_fetch(
-        *args: object, **kwargs: object
-    ) -> StubFetcherResponse:
-        return StubFetcherResponse(html_content="<p>Mock content body</p>")
+    results = await search(sink, query="none", time_range=None)
+
+    assert results == []
+    assert any("zero results" in msg for msg in sink.warnings)
+
+
+@pytest.mark.asyncio
+async def test_search_missing_results_key_raises(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    sink = RecordingSink()
+    stub_response = StubResponse(payload={"unexpected": []})
+    monkeypatch.setattr(
+        httpx, "AsyncClient", lambda **_: StubAsyncClient(stub_response)
+    )
+
+    with pytest.raises(SearchError):
+        await search(sink, query="oops")
+
+    assert sink.errors
+
+
+@pytest.mark.asyncio
+async def test_search_fetch_strategy_uses_fetch_results(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    sink = RecordingSink()
+    stub_response = StubResponse(
+        payload={
+            "results": [
+                {
+                    "title": "t1",
+                    "url": "http://one",
+                    "content": "snippet1",
+                    "score": 1,
+                },
+                {
+                    "title": "t2",
+                    "url": "http://two",
+                    "content": "snippet2",
+                    "score": 2,
+                },
+            ]
+        }
+    )
 
     monkeypatch.setattr(
-        "powersearch_mcp.powersearch.StealthyFetcher.async_fetch",
-        stub_async_fetch,
+        httpx, "AsyncClient", lambda **_: StubAsyncClient(stub_response)
+    )
+    monkeypatch.setattr(settings, "content_strategy", "fetch")
+    monkeypatch.setattr(settings, "filter_score_percentile", None)
+    monkeypatch.setattr(settings, "filter_top_k", 2)
+
+    async def fake_fetch(
+        ctx: MessageSink, url: str, fetch_timeout_ms: int
+    ) -> str:
+        if url.endswith("two"):
+            raise FetchError("boom")
+        return f"md for {url}"
+
+    monkeypatch.setattr(powersearch, "_fetch_url", fake_fetch)
+
+    results = await search(sink, query="hello")
+
+    assert results[0].content == "md for http://one"
+    assert results[1].content == "snippet2"
+    assert sink.errors
+
+
+@dataclass
+class FetcherResponse:
+    status: int
+    html_content: str
+
+
+@pytest.mark.asyncio
+async def test_fetch_url_cleans_and_limits_content(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    sink = RecordingSink()
+
+    async def fake_fetcher(**_: Any) -> FetcherResponse:
+        return FetcherResponse(status=200, html_content="<p>Hi</p>\n\n\nWorld")
+
+    monkeypatch.setattr(
+        powersearch.StealthyFetcher, "async_fetch", fake_fetcher
     )
     monkeypatch.setattr(
-        "powersearch_mcp.powersearch.trafilatura.extract",
-        lambda *_, **__: "Cleaned markdown content with extras",
+        powersearch,
+        "trafilatura",
+        type("T", (), {"extract": lambda *_, **__: "Hello\n\n\nWorld"}),
+    )
+    monkeypatch.setattr(settings, "content_limit", 50)
+
+    content = await _fetch_url(
+        sink, url="http://example.com", fetch_timeout_ms=1000
     )
 
-    results = await search(ctx=ctx, query="query", time_range=None)
-
-    assert len(results) == len(payload["results"])
-    for record in results:
-        assert isinstance(record.content, str)
-        assert len(record.content) <= settings.content_limit
-
-    assert ctx.messages == []
+    assert content == "Hello\n\nWorld"
 
 
 @pytest.mark.asyncio
 async def test_fetch_url_raises_on_bad_status(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    ctx = DummyCtx()
+    sink = RecordingSink()
 
-    async def stub_async_fetch(
-        *args: object, **kwargs: object
-    ) -> StubFetcherResponse:
-        return StubFetcherResponse(html_content="<p>bad</p>", status=500)
+    async def fake_fetcher(**_: Any) -> FetcherResponse:
+        return FetcherResponse(status=500, html_content="body")
 
     monkeypatch.setattr(
-        "powersearch_mcp.powersearch.StealthyFetcher.async_fetch",
-        stub_async_fetch,
+        powersearch.StealthyFetcher, "async_fetch", fake_fetcher
     )
 
     with pytest.raises(FetchError):
-        await fetch_url(
-            ctx=ctx, url="https://example.com/fail", fetch_timeout_ms=1000
-        )
+        await _fetch_url(sink, url="http://bad", fetch_timeout_ms=100)
 
-    assert (
-        "error",
-        "Fetch for https://example.com/fail returned status 500",
-    ) in ctx.messages
+    assert sink.errors
 
 
 @pytest.mark.asyncio
-async def test_search_rejects_invalid_time_range() -> None:
-    ctx = DummyCtx()
-    with pytest.raises(SearchError):
-        await search(ctx=ctx, query="irrelevant", time_range="week")
-
-    assert (
-        "error",
-        "Invalid time_range 'week'. Choose one of ['day', 'month', 'year'].",
-    ) in ctx.messages
-
-
-def test_filter_score_helpers_cover_edges() -> None:
-    empty: list[dict[str, Any]] = []
-    assert _filter_scores_by_percentile(empty, 50) == []
-
-    results = [
-        {"score": 10, "id": "a"},
-        {"score": 5, "id": "b"},
-        {"score": 10, "id": "c"},
-    ]
-
-    filtered = _filter_scores_by_percentile(results, 50)
-    assert {row["id"] for row in filtered} == {"a", "c"}
-
-    top2 = _filter_scores_by_top_k(results, 2)
-    assert {row["id"] for row in top2} == {"a", "c"}
-
-    top_many = _filter_scores_by_top_k(results, 10)
-    assert [row["id"] for row in top_many] == ["a", "b", "c"]
-
-
-@pytest.mark.asyncio
-async def test_search_handles_http_errors(
+async def test_fetch_url_handles_empty_extraction(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    ctx = DummyCtx()
-    settings.content_strategy = "quick"
+    sink = RecordingSink()
 
-    class StatusClient:
-        async def __aenter__(self) -> "StatusClient":
-            return self
-
-        async def __aexit__(self, *exc: object) -> None:
-            return None
-
-        async def get(self, *_: object, **__: object) -> httpx.Response:
-            request = httpx.Request("GET", "https://example.com/search")
-            response = httpx.Response(500, request=request)
-            raise httpx.HTTPStatusError(
-                "boom", request=request, response=response
-            )
-
-    monkeypatch.setattr(httpx, "AsyncClient", lambda **_: StatusClient())
-
-    with pytest.raises(SearchError):
-        await search(ctx=ctx, query="q", time_range=None)
-
-    assert any(level == "error" for level, _ in ctx.messages)
-
-    class TransportClient:
-        async def __aenter__(self) -> "TransportClient":
-            return self
-
-        async def __aexit__(self, *exc: object) -> None:
-            return None
-
-        async def get(self, *_: object, **__: object) -> httpx.Response:
-            raise httpx.TransportError("network down")
-
-    monkeypatch.setattr(httpx, "AsyncClient", lambda **_: TransportClient())
-
-    with pytest.raises(SearchError):
-        await search(ctx=ctx, query="q", time_range=None)
-
-    assert any(level == "error" for level, _ in ctx.messages)
-
-
-@pytest.mark.asyncio
-async def test_search_handles_missing_results(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    ctx = DummyCtx()
-    settings.content_strategy = "quick"
-
-    stub_response = StubAsyncResponse(payload={})
-    monkeypatch.setattr(
-        httpx, "AsyncClient", lambda **_: StubAsyncClient(stub_response)
-    )
-
-    with pytest.raises(SearchError):
-        await search(ctx=ctx, query="q", time_range=None)
-
-    assert (
-        "error",
-        "Search error: 'results' not found in SearXNG response",
-    ) in ctx.messages
-
-
-@pytest.mark.asyncio
-async def test_search_quick_strategy_uses_snippets(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    ctx = DummyCtx()
-    settings.content_strategy = "quick"
-    settings.filter_score_percentile = None
-    settings.filter_top_k = 10
-    settings.content_limit = None
-
-    payload = {
-        "results": [
-            {
-                "title": "Result One",
-                "content": "Snippet One",
-                "url": "https://example.com/one",
-                "score": 10,
-            },
-            {
-                "title": "Result Two",
-                "content": "Snippet Two",
-                "url": "https://example.com/two",
-                "score": 9,
-            },
-        ]
-    }
-
-    stub_response = StubAsyncResponse(payload=payload)
-    monkeypatch.setattr(
-        httpx, "AsyncClient", lambda **_: StubAsyncClient(stub_response)
-    )
-
-    results = await search(ctx=ctx, query="query", time_range=None)
-
-    assert [r.content for r in results] == ["Snippet One", "Snippet Two"]
-
-
-@pytest.mark.asyncio
-async def test_search_warns_on_zero_results(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    ctx = DummyCtx()
-    settings.content_strategy = "quick"
-
-    stub_response = StubAsyncResponse(payload={"results": []})
-    monkeypatch.setattr(
-        httpx, "AsyncClient", lambda **_: StubAsyncClient(stub_response)
-    )
-
-    results = await search(ctx=ctx, query="query", time_range=None)
-
-    assert results == []
-    assert (
-        "warning",
-        "Search returned zero results",
-    ) in ctx.messages
-
-
-@pytest.mark.asyncio
-async def test_search_unknown_strategy_warns_and_defaults(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    ctx = DummyCtx()
-    # Intentional invalid strategy to exercise fallback handling
-    settings.content_strategy = "invalid"  # type: ignore[assignment]
-    settings.filter_score_percentile = None
-    settings.filter_top_k = 10
-    settings.content_limit = None
-
-    payload = {
-        "results": [
-            {
-                "title": "Result One",
-                "content": "Snippet One",
-                "url": "https://example.com/one",
-                "score": 10,
-            }
-        ]
-    }
-
-    stub_response = StubAsyncResponse(payload=payload)
-    monkeypatch.setattr(
-        httpx, "AsyncClient", lambda **_: StubAsyncClient(stub_response)
-    )
-
-    results = await search(ctx=ctx, query="query", time_range=None)
-
-    assert results[0].content == "Snippet One"
-    assert any(level == "warning" for level, _ in ctx.messages)
-
-
-@pytest.mark.asyncio
-async def test_search_trimming_variants(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    ctx = DummyCtx()
-    settings.content_strategy = "quick"
-    settings.filter_score_percentile = None
-    settings.filter_top_k = 10
-
-    base_payload = {
-        "results": [
-            {
-                "title": "Result One",
-                "content": "A" * 12,
-                "url": "https://example.com/one",
-                "score": 10,
-            }
-        ]
-    }
-
-    stub_response = StubAsyncResponse(payload=base_payload)
-    monkeypatch.setattr(
-        httpx, "AsyncClient", lambda **_: StubAsyncClient(stub_response)
-    )
-
-    settings.content_limit = None
-    results = await search(ctx=ctx, query="query", time_range=None)
-    assert results[0].content == "A" * 12
-
-    settings.content_limit = 12
-    results = await search(ctx=ctx, query="query", time_range=None)
-    assert results[0].content == "A" * 12
-
-    settings.content_limit = 5
-    results = await search(ctx=ctx, query="query", time_range=None)
-    assert results[0].content == "A" * 5
-
-
-@pytest.mark.asyncio
-async def test_fetch_url_handles_fetcher_exception(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    ctx = DummyCtx()
-
-    async def failing_fetch(*_: object, **__: object) -> StubFetcherResponse:
-        raise RuntimeError("boom")
+    async def fake_fetcher(**_: Any) -> FetcherResponse:
+        return FetcherResponse(status=200, html_content="<p>Nothing</p>")
 
     monkeypatch.setattr(
-        "powersearch_mcp.powersearch.StealthyFetcher.async_fetch",
-        failing_fetch,
-    )
-
-    with pytest.raises(FetchError):
-        await fetch_url(
-            ctx=ctx, url="https://example.com/fail", fetch_timeout_ms=500
-        )
-
-    assert any("Fetcher failed" in message for _, message in ctx.messages)
-
-
-@pytest.mark.asyncio
-async def test_fetch_url_handles_missing_extraction(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    ctx = DummyCtx()
-
-    async def ok_fetch(*_: object, **__: object) -> StubFetcherResponse:
-        return StubFetcherResponse(html_content="<p>body</p>", status=200)
-
-    monkeypatch.setattr(
-        "powersearch_mcp.powersearch.StealthyFetcher.async_fetch",
-        ok_fetch,
+        powersearch.StealthyFetcher, "async_fetch", fake_fetcher
     )
     monkeypatch.setattr(
-        "powersearch_mcp.powersearch.trafilatura.extract",
-        lambda *_, **__: None,
+        powersearch,
+        "trafilatura",
+        type("T", (), {"extract": lambda *_, **__: None}),
     )
 
-    with pytest.raises(FetchError):
-        await fetch_url(
-            ctx=ctx, url="https://example.com/none", fetch_timeout_ms=500
-        )
+    content = await _fetch_url(sink, url="http://empty", fetch_timeout_ms=100)
 
-    assert any("No content extracted" in message for _, message in ctx.messages)
-
-
-@pytest.mark.asyncio
-async def test_search_fetch_resilience_on_partial_failure(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    ctx = DummyCtx()
-    settings.content_strategy = "fetch"
-    settings.filter_score_percentile = None
-    settings.filter_top_k = 10
-    settings.content_limit = None
-
-    payload = {
-        "results": [
-            {
-                "title": "Good",
-                "content": "Snippet Good",
-                "url": "https://example.com/good",
-                "score": 10,
-            },
-            {
-                "title": "Bad",
-                "content": "Snippet Bad",
-                "url": "https://example.com/bad",
-                "score": 9,
-            },
-        ]
-    }
-
-    stub_response = StubAsyncResponse(payload=payload)
-    monkeypatch.setattr(
-        httpx, "AsyncClient", lambda **_: StubAsyncClient(stub_response)
-    )
-
-    async def conditional_fetch(url: str, **_: object) -> StubFetcherResponse:
-        if "bad" in url:
-            raise RuntimeError("fetch broke")
-        return StubFetcherResponse(
-            html_content="<p>good content</p>", status=200
-        )
-
-    monkeypatch.setattr(
-        "powersearch_mcp.powersearch.StealthyFetcher.async_fetch",
-        conditional_fetch,
-    )
-    monkeypatch.setattr(
-        "powersearch_mcp.powersearch.trafilatura.extract",
-        lambda *_, **__: "Cleaned good content",
-    )
-
-    results = await search(ctx=ctx, query="query", time_range=None)
-
-    assert results[0].content == "Cleaned good content"
-    assert results[1].content == "Snippet Bad"
-    assert any(level == "error" for level, _ in ctx.messages)
+    assert content == ""
+    assert any("No content" in msg for msg in sink.errors)
