@@ -12,9 +12,16 @@ from powersearch_mcp import app
 from powersearch_mcp.powersearch import MessageSink, SearchResultRecord
 
 
+class _DummySamplingHandler:
+    async def sample(self, *_: object, **__: object) -> object:
+        return type("_Result", (), {"text": ""})()
+
+
 @pytest_asyncio.fixture
 async def mcp_client() -> AsyncIterator[Client[FastMCPTransport]]:
-    client: Client[FastMCPTransport] = Client(app.mcp)
+    client: Client[FastMCPTransport] = Client(
+        app.mcp, sampling_handler=_DummySamplingHandler()
+    )
     async with client:
         yield client
 

@@ -25,6 +25,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 if TYPE_CHECKING:  # pragma: no cover - type checking only
     from key_value.aio.protocols.key_value import AsyncKeyValue
 
+_env_file_setting = os.getenv("POWERSEARCH_ENV_FILE", ".env")
+
 DEFAULT_BASE_URL: HttpUrl = TypeAdapter(HttpUrl).validate_python(
     "http://127.0.0.1:9876"
 )
@@ -35,7 +37,7 @@ class PowerSearchSettings(BaseSettings):
 
     model_config = SettingsConfigDict(
         env_prefix="POWERSEARCH_",
-        env_file=".env",
+        env_file=_env_file_setting,
         env_file_encoding="utf-8",
         extra="ignore",
     )
@@ -201,7 +203,7 @@ class ServerSettings(BaseSettings):
 
     model_config = SettingsConfigDict(
         env_prefix="POWERSEARCH_",
-        env_file=".env",
+        env_file=_env_file_setting,
         env_file_encoding="utf-8",
         extra="ignore",
     )

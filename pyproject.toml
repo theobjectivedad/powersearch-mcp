@@ -88,7 +88,7 @@ cache_dir = ".mypy_cache"
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 env_override_existing_values = 1
-env_files = ".env"
+env_files = ["example-configs/example.env"]
 log_cli = true
 log_cli_level = "INFO"
 log_format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"

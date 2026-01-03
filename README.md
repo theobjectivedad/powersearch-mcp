@@ -7,7 +7,7 @@
 ![Project status](https://img.shields.io/pypi/status/powersearch-mcp?label=Status)
 ![License](https://img.shields.io/github/license/theobjectivedad/powersearch-mcp?label=License)
 ![Python Version](https://img.shields.io/pypi/pyversions/powersearch-mcp?label=Python)
-![PyPi version](https://img.shields.io/pypi/v/powersearch-mcp?label=PyPi%20Version)V
+![PyPi version](https://img.shields.io/pypi/v/powersearch-mcp?label=PyPi%20Version)
 
 PowerSearch MCP helps AI agents search and retrieve content from the public web with fewer broken fetches and clean, AI-friendly outputs ready to cite.
 
