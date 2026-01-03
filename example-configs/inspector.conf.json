@@ -1,0 +1,19 @@
+{
+    "mcpServers": {
+        "PowerSearch MCP (STDIO)": {
+            "command": "uv",
+            "args": [
+                "run",
+                "fastmcp",
+                "run",
+                "example-configs/fastmcp.json",
+                "--skip-source",
+                "--skip-env"
+            ]
+        },
+        "PowerSearch MCP (HTTP)": {
+            "type": "streamable-http",
+            "url": "http://localhost:8099/mcp"
+        }
+    }
+}

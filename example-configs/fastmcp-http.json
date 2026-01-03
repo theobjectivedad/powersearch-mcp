@@ -1,0 +1,20 @@
+{
+    "$schema": "https://gofastmcp.com/public/schemas/fastmcp.json/v1.json",
+    "source": {
+        "type": "filesystem",
+        "path": "src/powersearch_mcp/app.py",
+        "entrypoint": "mcp"
+    },
+    "environment": {
+        "type": "uv",
+        "project": ".",
+        "editable": [ "." ]
+    },
+    "deployment": {
+        "transport": "streamable-http",
+        "host": "127.0.0.1",
+        "port": 8099,
+        "path": "/mcp",
+        "log_level": "INFO"
+    }
+}

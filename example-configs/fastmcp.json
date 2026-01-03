@@ -1,0 +1,45 @@
+{
+    "$schema": "https://gofastmcp.com/public/schemas/fastmcp.json/v1.json",
+    "source": {
+        "type": "filesystem",
+        "path": "src/powersearch_mcp/app.py",
+        "entrypoint": "mcp"
+    },
+    "environment": {
+        "type": "uv",
+        "project": ".",
+        "editable": [ "." ]
+    },
+    "deployment": {
+        "transport": "stdio",
+        "env": {
+            "POWERSEARCH_LANGUAGE": "en",
+            "POWERSEARCH_SAFE_SEARCH": "1",
+            "POWERSEARCH_FILTER_SCORE_PERCENTILE": "75",
+            "POWERSEARCH_FILTER_TOP_K": "10",
+            "POWERSEARCH_CONTENT_STRATEGY": "fetch",
+            "POWERSEARCH_CONTENT_LIMIT": "4000",
+            "POWERSEARCH_TIMEOUT_SEC": "20",
+            "POWERSEARCH_HTTP2": "false",
+            "POWERSEARCH_CACHE": "memory",
+            "POWERSEARCH_CACHE_TTL_SEC": "3600",
+            "POWERSEARCH_LOG_LEVEL": "INFO",
+            "POWERSEARCH_INCLUDE_PAYLOADS": "false",
+            "POWERSEARCH_INCLUDE_PAYLOAD_LENGTH": "false",
+            "POWERSEARCH_ESTIMATE_PAYLOAD_TOKENS": "false",
+            "POWERSEARCH_MAX_PAYLOAD_LENGTH": "1000",
+            "POWERSEARCH_ERRORHANDLING_TRACEBACK": "false",
+            "POWERSEARCH_ERRORHANDLING_TRANSFORM": "true",
+            "POWERSEARCH_RETRY_RETRIES": "3",
+            "POWERSEARCH_RETRY_BASE_DELAY": "1.0",
+            "POWERSEARCH_RETRY_MAX_DELAY": "60.0",
+            "POWERSEARCH_RETRY_BACKOFF_MULTIPLIER": "2.0",
+            "FASTMCP_LOG_LEVEL": "INFO",
+            "FASTMCP_MASK_ERROR_DETAILS": "false",
+            "FASTMCP_STRICT_INPUT_VALIDATION": "true",
+            "FASTMCP_INCLUDE_FASTMCP_META": "true",
+            "FASTMCP_DOCKET_URL": "memory://",
+            "FASTMCP_DOCKET_CONCURRENCY": "10"
+        }
+    }
+}
