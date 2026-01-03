@@ -87,6 +87,26 @@ class PowerSearchSettings(BaseSettings):
         ge=0,
         description="Trim each result's content to this many characters; None to disable.",
     )
+    summary_chunk_size: int = Field(
+        default=4,
+        ge=1,
+        description=(
+            "How many results to include per chunk when running map-reduce summarization."
+        ),
+    )
+    summary_temperature: float = Field(
+        default=0.0,
+        ge=0.0,
+        le=2.0,
+        description="Temperature used for sampling-based summaries (0 is most deterministic).",
+    )
+    summary_max_tokens: int | None = Field(
+        default=800,
+        ge=1,
+        description=(
+            "Maximum tokens requested from the client LLM during summary sampling; None leaves it unset."
+        ),
+    )
     timeout_sec: int = Field(
         default=20,
         gt=0,

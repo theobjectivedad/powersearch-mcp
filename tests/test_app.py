@@ -26,13 +26,18 @@ async def test_exposes_tools_and_prompts(
     tools = await mcp_client.list_tools()
     tool_names = {tool.name for tool in tools}
 
-    assert {"search", "fetch_url"} <= tool_names
+    assert {"search", "fetch_url", "summarize_search"} <= tool_names
 
     prompts = await mcp_client.list_prompts()
     prompt_by_name = {prompt.name: prompt for prompt in prompts}
 
     assert "internet_search_prompt" in prompt_by_name
     assert prompt_by_name["internet_search_prompt"].title == "Internet Search"
+    assert "summarize_internet_search_prompt" in prompt_by_name
+    assert (
+        prompt_by_name["summarize_internet_search_prompt"].title
+        == "Summarize Internet Search"
+    )
 
 
 @pytest.mark.asyncio
@@ -99,6 +104,38 @@ async def test_fetch_tool_returns_text_payload(
     first_content = result.content[0]
     assert isinstance(first_content, TextContent)
     assert first_content.text.startswith("body from http://example.com")
+
+
+@pytest.mark.asyncio
+async def test_summarize_search_tool_returns_structured_result(
+    mcp_client: Client[FastMCPTransport], monkeypatch: MonkeyPatch
+) -> None:
+    async def fake_summary(
+        ctx: MessageSink,
+        query: str,
+        intent: str,
+        time_range: str | None = None,
+        max_results: int | None = None,
+        map_reduce: bool = False,
+    ) -> dict[str, object]:
+        return {
+            "summary": "done",
+            "citations": ["http://example.com"],
+            "strategy": "single-pass",
+            "results": [],
+        }
+
+    monkeypatch.setattr(app, "run_summarize_search", fake_summary)
+
+    result = await mcp_client.call_tool(
+        "summarize_search",
+        {"query": "example", "intent": "summarize"},
+    )
+
+    assert not result.is_error
+    assert result.structured_content
+    assert result.structured_content["summary"] == "done"
+    assert result.structured_content["citations"] == ["http://example.com"]
 
 
 @pytest.mark.asyncio

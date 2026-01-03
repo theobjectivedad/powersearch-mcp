@@ -1,9 +1,19 @@
 import asyncio
 import json
 import logging
+import os
 
+from dotenv import load_dotenv
 from fastmcp import Client
 from fastmcp.client.logging import LogMessage
+from fastmcp.client.sampling import (
+    RequestContext,
+    SamplingMessage,
+    SamplingParams,
+)
+from fastmcp.client.sampling.handlers.openai import OpenAISamplingHandler
+from mcp.types import SamplingCapability
+from openai import AsyncOpenAI
 
 logging.basicConfig(
     level=logging.INFO,
@@ -14,6 +24,18 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 LOGGING_LEVEL_MAP = logging.getLevelNamesMapping()
+
+
+load_dotenv()
+
+
+def get_default_model() -> str:
+    model = os.getenv("OPENAI_DEFAULT_MODEL")
+    if not model:
+        raise RuntimeError(
+            "OPENAI_DEFAULT_MODEL is not set; update your environment or .env"
+        )
+    return model
 
 
 async def log_handler(message: LogMessage) -> None:
@@ -35,6 +57,18 @@ async def progress_handler(
         )
     else:
         logger.info("Progress: %s - %s", progress, derived_message)
+
+
+async def sampling_handler(
+    messages: list[SamplingMessage],
+    params: SamplingParams,
+    context: RequestContext,
+) -> str:
+    logger.info("Received messages for sampling:")
+    for msg in messages:
+        logger.info("Role: %s, Content: %s", msg.role, msg.content)
+
+    return "Demo Sampling Response"
 
 
 async def main() -> None:
@@ -61,7 +95,7 @@ async def main() -> None:
             "powersearch": {
                 "transport": "streamable-http",
                 "url": "http://127.0.0.1:8099/mcp",
-                "auth": "oauth",
+                # "auth": "oauth",
             },
         }
     }
@@ -72,6 +106,12 @@ async def main() -> None:
         timeout=25000,
         log_handler=log_handler,
         progress_handler=progress_handler,
+        sampling_handler=sampling_handler,
+        # sampling_handler=OpenAISamplingHandler(
+        #     default_model=get_default_model(),  # type: ignore
+        #     client=AsyncOpenAI(),
+        # ),
+        sampling_capabilities=SamplingCapability(),
     )
 
     async with client:
@@ -87,9 +127,18 @@ async def main() -> None:
         tools = await client.list_tools()
         logger.info("Available tools: %s", tools)
 
+        # search_result = await client.call_tool(
+        #     "search",
+        #     {"query": "Best technology stocks for 2026"},
+        # )
+
         search_result = await client.call_tool(
-            "search",
-            {"query": "Best technology stocks for 2026"},
+            "summarize_search",
+            {
+                "query": "Best technology stocks for 2026",
+                "intent": "Trading strategy research for personal portfolio.",
+                "map_reduce": False,
+            },
         )
 
         logger.info(

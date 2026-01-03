@@ -31,6 +31,10 @@ from powersearch_mcp.settings import (
     build_key_value_store,
     server_settings,
 )
+from powersearch_mcp.summarize import SearchSummary
+from powersearch_mcp.summarize import (
+    summarize_search_results as run_summarize_search,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -38,10 +42,11 @@ logger = logging.getLogger(__name__)
 mcp = FastMCP(
     name="powersearch-mcp",
     instructions=(
-        "Internet search plus page fetch. "
+        "Internet search plus page fetch and sampling-based summarization. "
         "search(query, time_range=day|month|year) returns results with title, url, and "
         "cleaned markdown content. fetch_url(url, fetch_timeout_ms) fetches a single page "
-        "and returns cleaned markdown. Use for public web lookups; do not expect internal data."
+        "and returns cleaned markdown. summarize_search(query, intent, time_range, map_reduce) "
+        "runs a background task that summarizes the search results with citations. Use for public web lookups; do not expect internal data."
     ),
     version=__version__,
     tasks=True,
@@ -132,6 +137,39 @@ async def internet_search_prompt(
     )
 
 
+@mcp.prompt(title="Summarize Internet Search")
+async def summarize_internet_search_prompt(
+    goal: Annotated[str, Field(description="What you are trying to find")],
+    intent: Annotated[
+        str,
+        Field(
+            description="How the agent plans to use the summary (tone, focus, depth)"
+        ),
+    ],
+    time_range: Annotated[
+        str | None,
+        Field(
+            default=None,
+            description="Optional recency bias: day, month, or year.",
+        ),
+    ] = None,
+) -> str:
+    recency_hint = (
+        f" Include time_range='{time_range}' if you need recent results."
+        if time_range
+        else ""
+    )
+
+    return (
+        "You can summarize public web results via the powersearch MCP server.\n"
+        f"Goal: {goal}\n"
+        f"Intent: {intent}\n"
+        f"- Call powersearch/summarize_search with the goal as the query and the intent as guidance.{recency_hint}\n"
+        "- By default it uses a single-pass summary; set map_reduce=true for larger corpora knowing sampling is sequential.\n"
+        "- Cite URLs from the results; do not invent sources or facts."
+    )
+
+
 @mcp.tool()
 async def search(
     ctx: Context,
@@ -174,6 +212,60 @@ async def fetch_url(
         ctx=ctx,
         url=url,
         fetch_timeout_ms=fetch_timeout_ms,
+    )
+
+
+@mcp.tool(task=True)
+async def summarize_search(  # noqa: PLR0913
+    ctx: Context,
+    query: Annotated[
+        str, Field(description="Search query string to summarize")
+    ],
+    intent: Annotated[
+        str,
+        Field(
+            description="Agent intent that shapes the summary tone and focus"
+        ),
+    ],
+    time_range: Annotated[
+        str | None,
+        Field(
+            default=None,
+            description=(
+                "Restrict results to a timeframe: day, month, or year. "
+                "Leave empty to search all time."
+            ),
+        ),
+    ] = None,
+    max_results: Annotated[
+        int | None,
+        Field(
+            default=None,
+            ge=1,
+            description="Optional cap on results included in the summary context.",
+        ),
+    ] = None,
+    map_reduce: Annotated[
+        bool | None,
+        Field(
+            default=None,
+            description=(
+                "Use sequential map-reduce summarization to handle more results; slower but more thorough."
+            ),
+        ),
+    ] = None,
+) -> SearchSummary:
+    """Summarize search results via MCP sampling with citations preserved."""
+
+    map_reduce_flag = bool(map_reduce)
+
+    return await run_summarize_search(
+        ctx=ctx,
+        query=query,
+        intent=intent,
+        time_range=time_range,
+        max_results=max_results,
+        map_reduce=map_reduce_flag,
     )
 
 

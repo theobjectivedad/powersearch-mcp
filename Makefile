@@ -71,12 +71,11 @@ update-deps:
 
 .PHONY: inspector
 inspector:
-	npx @modelcontextprotocol/inspector --config $(CURDIR)/inspector.conf.json --server='PowerSearch MCP (STDIO)'
+	npx @modelcontextprotocol/inspector --config $(CURDIR)/example-configs/inspector.conf.json --server='PowerSearch MCP (STDIO)'
 
 .PHONY: inspector-http
 inspector-http:
-	npx @modelcontextprotocol/inspector --config $(CURDIR)/inspector.conf.json --server='PowerSearch MCP (HTTP)'
-
+	npx @modelcontextprotocol/inspector --config $(CURDIR)/example-configs/inspector.conf.json --server='PowerSearch MCP (HTTP)'
 
 .PHONY: inspect
 inspect:
@@ -95,11 +94,15 @@ run: run-stdio
 
 .PHONY: run-stdio
 run-stdio:
-	uv run fastmcp run fastmcp.json --skip-source --skip-env
+	uv run fastmcp run $(CURDIR)/example-configs/fastmcp.json --skip-source --skip-env
 
 .PHONY: run-http
 run-http:
-	uv run fastmcp run fastmcp-http.json --skip-source --skip-env
+	uv run fastmcp run $(CURDIR)/example-configs/fastmcp-http.json --skip-source --skip-env
+
+.PHONY: run-client
+run-client:
+	uv run python $(CURDIR)/scripts/demo_client.py
 
 ################################################################################
 # Local package build targets
