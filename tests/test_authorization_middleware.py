@@ -34,14 +34,17 @@ def clear_auth_context() -> Iterator[None]:
 
 
 def test_stringify_claim_lists_normalizes_nested_sequences() -> None:
-    claims = {
-        "sub": "user-123",
-        "roles": ["reader", "writer"],
-        "nested": {"scopes": ["one", "two"]},
-        "list_of_dicts": [{"k": "v1"}, {"k": "v2"}],
-    }
+    claims = cast(
+        authorization_middleware.ClaimValue,
+        {
+            "sub": "user-123",
+            "roles": ["reader", "writer"],
+            "nested": {"scopes": ["one", "two"]},
+            "list_of_dicts": [{"k": "v1"}, {"k": "v2"}],
+        },
+    )
 
-    normalized = _stringify_claim_lists(claims)
+    normalized = cast(dict[str, Any], _stringify_claim_lists(claims))
 
     assert normalized["roles"] == "reader writer"
     assert normalized["nested"]["scopes"] == "one two"

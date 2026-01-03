@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 import os
 from pathlib import Path
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Literal, no_type_check
 
 from key_value.aio.stores.disk import DiskStore
 from key_value.aio.stores.memory import MemoryStore
@@ -25,6 +25,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 if TYPE_CHECKING:  # pragma: no cover - type checking only
     from key_value.aio.protocols.key_value import AsyncKeyValue
 
+_env_file_setting = os.getenv("POWERSEARCH_ENV_FILE", ".env")
+
 DEFAULT_BASE_URL: HttpUrl = TypeAdapter(HttpUrl).validate_python(
     "http://127.0.0.1:9876"
 )
@@ -35,7 +37,7 @@ class PowerSearchSettings(BaseSettings):
 
     model_config = SettingsConfigDict(
         env_prefix="POWERSEARCH_",
-        env_file=".env",
+        env_file=_env_file_setting,
         env_file_encoding="utf-8",
         extra="ignore",
     )
@@ -86,6 +88,34 @@ class PowerSearchSettings(BaseSettings):
         default=None,
         ge=0,
         description="Trim each result's content to this many characters; None to disable.",
+    )
+    summary_content_limit: int | None = Field(
+        default=None,
+        ge=0,
+        description=(
+            "Optional per-result character cap applied only to summary searches; "
+            "None leaves summary content untrimmed."
+        ),
+    )
+    summary_chunk_size: int = Field(
+        default=4,
+        ge=1,
+        description=(
+            "How many results to include per chunk when running map-reduce summarization."
+        ),
+    )
+    summary_temperature: float = Field(
+        default=0.0,
+        ge=0.0,
+        le=2.0,
+        description="Temperature used for sampling-based summaries (0 is most deterministic).",
+    )
+    summary_max_tokens: int | None = Field(
+        default=800,
+        ge=1,
+        description=(
+            "Maximum tokens requested from the client LLM during summary sampling; None leaves it unset."
+        ),
     )
     timeout_sec: int = Field(
         default=20,
@@ -173,7 +203,7 @@ class ServerSettings(BaseSettings):
 
     model_config = SettingsConfigDict(
         env_prefix="POWERSEARCH_",
-        env_file=".env",
+        env_file=_env_file_setting,
         env_file_encoding="utf-8",
         extra="ignore",
     )
@@ -184,21 +214,24 @@ class ServerSettings(BaseSettings):
             "Logging level for middleware; defaults to FASTMCP_LOG_LEVEL or INFO."
         ),
     )
-    include_payloads: bool = Field(
+    log_payloads: bool = Field(
         default=False,
+        validation_alias=AliasChoices("log_payloads", "include_payloads"),
         description="Include MCP request/response payload bodies in logs.",
     )
-    include_payload_length: bool = Field(
+    log_estimate_tokens: bool = Field(
         default=False,
-        description="Log payload length alongside other request metadata.",
-    )
-    estimate_payload_tokens: bool = Field(
-        default=False,
+        validation_alias=AliasChoices(
+            "log_estimate_tokens", "estimate_payload_tokens"
+        ),
         description="Estimate token counts (length // 4) when logging payloads.",
     )
-    max_payload_length: int = Field(
+    log_max_payload_length: int = Field(
         default=1000,
         ge=0,
+        validation_alias=AliasChoices(
+            "log_max_payload_length", "max_payload_length"
+        ),
         description="Maximum payload characters to log when payload logging is enabled.",
     )
     errorhandling_traceback: bool = Field(
@@ -254,6 +287,34 @@ class ServerSettings(BaseSettings):
         default=True,
         description="Enable Eunomia audit logging when authorization middleware is active.",
     )
+    fallback_behavior: Literal["fallback", "always"] | None = Field(
+        default=None,
+        description=(
+            "Optional FastMCP sampling handler behavior ('fallback' or 'always'); "
+            "set when providing a server-side sampling handler."
+        ),
+    )
+    openai_api_key: str | None = Field(
+        default=None,
+        description="API key used by the OpenAI-compatible sampling fallback handler.",
+    )
+    openai_base_url: HttpUrl | None = Field(
+        default=None,
+        description="Optional base URL for OpenAI-compatible providers (e.g., LiteLLM proxy).",
+    )
+    openai_default_model: str | None = Field(
+        default=None,
+        description="Default model name used by the OpenAI sampling handler.",
+    )
+
+    @no_type_check
+    def __init__(
+        self,
+        _env_file: str | Path | list[str | Path] | None = None,
+        **data: object,
+    ) -> None:
+        # Delegate to BaseSettings while keeping _env_file visible to type checkers.
+        super().__init__(_env_file=_env_file, **data)
 
     @model_validator(mode="after")
     def _apply_log_level_default(self) -> ServerSettings:

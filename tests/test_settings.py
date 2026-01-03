@@ -24,14 +24,13 @@ def test_server_settings_defaults_remain_stable(
     for key in env_keys:
         monkeypatch.delenv(key, raising=False)
 
-    settings = ServerSettings()
+    settings = ServerSettings(_env_file=None)
 
     assert settings.model_dump() == {
         "log_level": "INFO",
-        "include_payloads": False,
-        "include_payload_length": False,
-        "estimate_payload_tokens": False,
-        "max_payload_length": 1000,
+        "log_payloads": False,
+        "log_estimate_tokens": False,
+        "log_max_payload_length": 1000,
         "errorhandling_traceback": False,
         "errorhandling_transform": True,
         "retry_retries": 3,
@@ -42,7 +41,32 @@ def test_server_settings_defaults_remain_stable(
         "cache_ttl_sec": 3600,
         "authz_policy_path": None,
         "enable_audit_logging": True,
+        "fallback_behavior": None,
+        "openai_api_key": None,
+        "openai_base_url": None,
+        "openai_default_model": None,
     }
+
+
+def test_server_settings_sampling_fallback_env(
+    monkeypatch: MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("POWERSEARCH_FALLBACK_BEHAVIOR", "fallback")
+    monkeypatch.setenv("POWERSEARCH_OPENAI_API_KEY", "SECRET")
+    monkeypatch.setenv(
+        "POWERSEARCH_OPENAI_BASE_URL",
+        "https://litellm.example.internal/v1",
+    )
+    monkeypatch.setenv("POWERSEARCH_OPENAI_DEFAULT_MODEL", "gpt-oss-120b")
+
+    settings = ServerSettings(_env_file=None)
+
+    assert settings.fallback_behavior == "fallback"
+    assert settings.openai_api_key == "SECRET"
+    assert (
+        str(settings.openai_base_url) == "https://litellm.example.internal/v1"
+    )
+    assert settings.openai_default_model == "gpt-oss-120b"
 
 
 def test_authz_policy_requires_authentication(
@@ -53,7 +77,7 @@ def test_authz_policy_requires_authentication(
     policy_path.write_text("{}")
 
     with pytest.raises(ValueError, match="FASTMCP_SERVER_AUTH"):
-        ServerSettings(authz_policy_path=str(policy_path))
+        ServerSettings(authz_policy_path=str(policy_path), _env_file=None)
 
 
 def test_authz_policy_allows_configured_auth(
@@ -66,6 +90,8 @@ def test_authz_policy_allows_configured_auth(
     policy_path = tmp_path / "policy.json"
     policy_path.write_text("{}")
 
-    settings = ServerSettings(authz_policy_path=str(policy_path))
+    settings = ServerSettings(
+        authz_policy_path=str(policy_path), _env_file=None
+    )
 
     assert settings.authz_policy_path == str(policy_path)

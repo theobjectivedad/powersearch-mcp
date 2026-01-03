@@ -6,7 +6,7 @@
                 "run",
                 "fastmcp",
                 "run",
-                "fastmcp.json",
+                "example-configs/fastmcp.json",
                 "--skip-source",
                 "--skip-env"
             ]

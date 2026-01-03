@@ -11,7 +11,7 @@ dependencies = [
     "camoufox[geoip]>=0.4.11,<1",
     "curl-cffi>=0.14.0,<1",
     "eunomia-mcp>=0.3.10",
-    "fastmcp>=2.14,<3",
+    "fastmcp[openai]>=2.14,<3",
     "httpx[http2]>=0.28.1,<1",
     "mcp[cli]>=1.12.1,<2",
     "msgspec>=0.20.0,<1",
@@ -88,7 +88,7 @@ cache_dir = ".mypy_cache"
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 env_override_existing_values = 1
-env_files = ".env"
+env_files = ["example-configs/example.env"]
 log_cli = true
 log_cli_level = "INFO"
 log_format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"

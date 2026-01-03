@@ -12,9 +12,16 @@ from powersearch_mcp import app
 from powersearch_mcp.powersearch import MessageSink, SearchResultRecord
 
 
+class _DummySamplingHandler:
+    async def sample(self, *_: object, **__: object) -> object:
+        return type("_Result", (), {"text": ""})()
+
+
 @pytest_asyncio.fixture
 async def mcp_client() -> AsyncIterator[Client[FastMCPTransport]]:
-    client: Client[FastMCPTransport] = Client(app.mcp)
+    client: Client[FastMCPTransport] = Client(
+        app.mcp, sampling_handler=_DummySamplingHandler()
+    )
     async with client:
         yield client
 
@@ -26,13 +33,18 @@ async def test_exposes_tools_and_prompts(
     tools = await mcp_client.list_tools()
     tool_names = {tool.name for tool in tools}
 
-    assert {"search", "fetch_url"} <= tool_names
+    assert {"search", "fetch_url", "summarize_search"} <= tool_names
 
     prompts = await mcp_client.list_prompts()
     prompt_by_name = {prompt.name: prompt for prompt in prompts}
 
     assert "internet_search_prompt" in prompt_by_name
     assert prompt_by_name["internet_search_prompt"].title == "Internet Search"
+    assert "summarize_internet_search_prompt" in prompt_by_name
+    assert (
+        prompt_by_name["summarize_internet_search_prompt"].title
+        == "Summarize Internet Search"
+    )
 
 
 @pytest.mark.asyncio
@@ -99,6 +111,36 @@ async def test_fetch_tool_returns_text_payload(
     first_content = result.content[0]
     assert isinstance(first_content, TextContent)
     assert first_content.text.startswith("body from http://example.com")
+
+
+@pytest.mark.asyncio
+async def test_summarize_search_tool_returns_structured_result(
+    mcp_client: Client[FastMCPTransport], monkeypatch: MonkeyPatch
+) -> None:
+    async def fake_summary(
+        ctx: MessageSink,
+        query: str,
+        intent: str,
+        time_range: str | None = None,
+        max_results: int | None = None,
+        map_reduce: bool = False,
+    ) -> dict[str, object]:
+        return {
+            "summary": "done",
+            "sources": ["http://example.com"],
+        }
+
+    monkeypatch.setattr(app, "run_summarize_search", fake_summary)
+
+    result = await mcp_client.call_tool(
+        "summarize_search",
+        {"query": "example", "intent": "summarize"},
+    )
+
+    assert not result.is_error
+    assert result.structured_content
+    assert result.structured_content["summary"] == "done"
+    assert result.structured_content["sources"] == ["http://example.com"]
 
 
 @pytest.mark.asyncio
