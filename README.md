@@ -20,9 +20,9 @@ PowerSearch MCP helps AI agents search and retrieve content from the public web 
 - ✅ AI Agent-friendly responses: HTML pages are converted to markdown automatically via [Trafilatura](https://github.com/adbar/trafilatura)
 - ✅ Support for STDIO and streaming HTTP transports
 - ✅ Health check endpoint for HTTP transport
-- ✅ Extensive [configuration](#configuration) suitable for many deployment scenarios
-- ✅ Authentication support for both JWT and opaque tokens
-- ✅ Authorization support for embedded [Eunomia](https://github.com/whataboutyou-ai/eunomia) policies
+- ✅ Extensive [configuration](https://github.com/theobjectivedad/powersearch-mcp/blob/master/docs/configuration.md) suitable for many deployment scenarios
+- ✅ [Authentication support](https://github.com/theobjectivedad/powersearch-mcp/blob/master/docs/auth.md) for both JWT and opaque tokens
+- ✅ [Authorization support](https://github.com/theobjectivedad/powersearch-mcp/blob/master/docs/auth.md#how-authorization-works-here) for embedded [Eunomia](https://github.com/whataboutyou-ai/eunomia) policies
 - ✅ Auto summarization of search results via [MCP sampling](https://modelcontextprotocol.io/specification/2025-06-18/client/sampling)
 - ✅ Optional server-side fallback for clients that don't support MCP sampling
 - 🗓️ (Future) Client selectable synchronous (current behavior) or asynchronous [SEP-1686](https://modelcontextprotocol.io/specification/2025-11-25/basic/utilities/tasks) execution for search / fetch tools
@@ -57,15 +57,15 @@ docker run --rm -it \
 
 ## Running the server
 
-PowerSearch now relies entirely on the FastMCP CLI and the checked-in configuration files. Runtime behavior still comes from `POWERSEARCH_` environment variables (or a `.env` file).
+PowerSearch is run via the FastMCP CLI. See [configuration.md](https://github.com/theobjectivedad/powersearch-mcp/blob/master/docs/configuration.md) for details on the available deployment settings.
 
-- STDIO (default): `fastmcp run fastmcp.json --skip-env --project .` — best for Claude Desktop and Inspector.
-- Streamable HTTP example: `fastmcp run fastmcp-http.json --skip-env --project .` — binds to `0.0.0.0:8092/mcp` with CORS enabled.
+- STDIO (default): `fastmcp run fastmcp.json --skip-env --project .` - best for Claude Desktop and Inspector.
+- Streamable HTTP example: `fastmcp run fastmcp-http.json --skip-env --project .` - binds to `0.0.0.0:8092/mcp` with CORS enabled.
 - Override deployment settings at launch with flags (for example `--transport stdio`, `--host 0.0.0.0`, `--port 8912`, `--path /custom`). CLI flags override the `deployment` block in the chosen config.
 
 Both configs bake in the runtime dependencies to make first-time installs predictable; uv will reuse the local project via `--project .` and `editable` so local edits take effect. The HTTP app still exposes a `/health` endpoint and honors all `POWERSEARCH_` environment variables for search behavior.
 
-To run the search backend in the background:
+To run SearXNG locally in the background via Docker:
 
 ```shell
 docker run -d \
@@ -86,11 +86,3 @@ docker run -d \
     --volume "$(pwd)/searxng.yaml:/settings.yml:ro" \
     searxng/searxng
 ```
-
-## How Are Search Results Ranked?
-
-SearXNG returns each hit with a score that already blends engine weight and position. PowerSearch keeps that score and applies two passes: a percentile cut and a top-K trim. By default it keeps results at or above the 75th percentile, then retains only the top 10. That combination aggressively drops weak hits while keeping a predictable result count.
-
-If you set `POWERSEARCH_FILTER_SCORE_PERCENTILE` to `None`, the percentile cut is skipped and only the top-K pass runs. Increasing `POWERSEARCH_FILTER_TOP_K` widens the net but may slow things down if content fetching is enabled.
-
-Content strategy matters too. With `fetch`, the tool will fetch each retained URL and run Trafilatura over it; higher K or looser filters mean more network work. With `quick`, PowerSearch leaves content as the SearXNG snippets, which is faster but less complete.
