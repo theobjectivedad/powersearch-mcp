@@ -15,6 +15,7 @@ PowerSearch reads environment variables with the `POWERSEARCH_` prefix (also res
 | `POWERSEARCH_FILTER_TOP_K` | Keep only the top K after scoring. | Increase for more results; decrease for faster downstream fetches. |
 | `POWERSEARCH_CONTENT_STRATEGY` | `fetch` pulls pages; `quick` uses SearXNG snippets only. | Use `quick` when you cannot fetch pages or need speed. |
 | `POWERSEARCH_CONTENT_LIMIT` | Character cap per result. | Raise to keep more text; set `None` to disable trimming. |
+| `POWERSEARCH_SUMMARY_CONTENT_LIMIT` | Character cap per result when summarizing. | Set to keep summary context lean; leave unset for no extra trimming. |
 | `POWERSEARCH_SUMMARY_CHUNK_SIZE` | Results per chunk when map-reduce is enabled. | Lower for tighter prompts; raise to reduce the number of sampling calls. |
 | `POWERSEARCH_SUMMARY_TEMPERATURE` | Temperature used for summary sampling. | Keep near 0 for deterministic summaries; raise slightly for variety. |
 | `POWERSEARCH_SUMMARY_MAX_TOKENS` | Max tokens requested from the client LLM for summaries. | Adjust to fit your client model limits; set `None` to leave unset. |
@@ -44,10 +45,11 @@ PowerSearch reads environment variables with the `POWERSEARCH_` prefix (also res
 | Setting | What it does | When to change |
 | --- | --- | --- |
 | `POWERSEARCH_LOG_LEVEL` | Logging level for middleware; falls back to `FASTMCP_LOG_LEVEL` when unset. | Raise to `DEBUG`/`INFO` while troubleshooting; lower to `WARNING`/`ERROR` in production. |
-| `POWERSEARCH_INCLUDE_PAYLOADS` | Include full MCP request/response bodies in logs. | Enable temporarily for debugging only; can expose user data. |
-| `POWERSEARCH_INCLUDE_PAYLOAD_LENGTH` | Log payload length alongside metadata. | Pair with payload logging when sizes matter but full bodies are off. |
-| `POWERSEARCH_ESTIMATE_PAYLOAD_TOKENS` | Log approximate token counts (length // 4). | Enable when monitoring token budgets. |
-| `POWERSEARCH_MAX_PAYLOAD_LENGTH` | Cap logged payload characters. | Lower to reduce log volume; raise when debugging truncated bodies. |
+| `POWERSEARCH_LOG_PAYLOADS` | Include full MCP request/response bodies in logs. | Enable temporarily for debugging only; can expose user data. |
+| `POWERSEARCH_LOG_ESTIMATE_TOKENS` | Log approximate token counts (length // 4). | Enable when monitoring token budgets. |
+| `POWERSEARCH_LOG_MAX_PAYLOAD_LENGTH` | Cap logged payload characters. | Lower to reduce log volume; raise when debugging truncated bodies. |
+
+Payload lengths are always included in middleware logs to aid debugging.
 | `POWERSEARCH_ERRORHANDLING_TRACEBACK` | Include tracebacks in error responses. | Enable only in non-production environments. |
 | `POWERSEARCH_ERRORHANDLING_TRANSFORM` | Convert exceptions into MCP-friendly error responses. | Leave on unless you need raw exceptions for debugging. |
 | `POWERSEARCH_RETRY_RETRIES` | Max retry attempts applied by retry middleware. | Increase for flaky upstreams; set to 0 to disable retries. |
@@ -56,6 +58,15 @@ PowerSearch reads environment variables with the `POWERSEARCH_` prefix (also res
 | `POWERSEARCH_RETRY_BACKOFF_MULTIPLIER` | Exponential backoff multiplier. | Lower for gentler backoff; raise for faster escalation. |
 | `FASTMCP_DOCKET_URL` | Session docket store for Streamable HTTP (e.g., `memory://`, `redis://host:port/db`). | Switch to Redis or another backend when you need persistent/distributed HTTP sessions. |
 | `FASTMCP_DOCKET_CONCURRENCY` | Max concurrent docket operations. | Increase for higher HTTP session throughput; lower to limit resource use. |
+
+## Sampling Fallback
+
+| Setting | What it does | When to change |
+| --- | --- | --- |
+| `POWERSEARCH_FALLBACK_BEHAVIOR` | FastMCP sampling handler behavior (e.g., `fallback`) advertised when a server-side handler is configured. | Set to `fallback` when you want the server to call the OpenAI-compatible handler if the client lacks sampling support. |
+| `POWERSEARCH_OPENAI_API_KEY` | API key used by the OpenAI-compatible sampling handler. | Provide when enabling server-side sampling fallback. |
+| `POWERSEARCH_OPENAI_BASE_URL` | Optional base URL for OpenAI-compatible providers (e.g., LiteLLM proxy). | Set when using a proxy or non-default OpenAI endpoint. |
+| `POWERSEARCH_OPENAI_DEFAULT_MODEL` | Default model requested by the OpenAI sampling handler. | Choose the deployed model name that matches your provider. |
 
 ## Caching
 

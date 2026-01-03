@@ -120,9 +120,7 @@ async def test_summarize_search_tool_returns_structured_result(
     ) -> dict[str, object]:
         return {
             "summary": "done",
-            "citations": ["http://example.com"],
-            "strategy": "single-pass",
-            "results": [],
+            "sources": ["http://example.com"],
         }
 
     monkeypatch.setattr(app, "run_summarize_search", fake_summary)
@@ -135,7 +133,7 @@ async def test_summarize_search_tool_returns_structured_result(
     assert not result.is_error
     assert result.structured_content
     assert result.structured_content["summary"] == "done"
-    assert result.structured_content["citations"] == ["http://example.com"]
+    assert result.structured_content["sources"] == ["http://example.com"]
 
 
 @pytest.mark.asyncio

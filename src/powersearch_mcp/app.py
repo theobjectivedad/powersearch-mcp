@@ -4,6 +4,7 @@ import logging
 from pathlib import Path
 from typing import TYPE_CHECKING, Annotated
 
+from fastmcp.client.sampling.handlers.openai import OpenAISamplingHandler
 from fastmcp.server import Context, FastMCP
 from fastmcp.server.middleware.caching import ResponseCachingMiddleware
 from fastmcp.server.middleware.error_handling import (
@@ -11,6 +12,12 @@ from fastmcp.server.middleware.error_handling import (
     RetryMiddleware,
 )
 from fastmcp.server.middleware.logging import LoggingMiddleware
+from mcp.types import (
+    ClientCapabilities,
+    SamplingCapability,
+    SamplingToolsCapability,
+)
+from openai import AsyncOpenAI
 from pydantic import Field
 from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import Response
@@ -39,6 +46,31 @@ from powersearch_mcp.summarize import (
 logger = logging.getLogger(__name__)
 
 
+sampling_handler = None
+
+if server_settings.openai_api_key and server_settings.openai_default_model:
+    client = (
+        AsyncOpenAI(
+            api_key=server_settings.openai_api_key,
+            base_url=str(server_settings.openai_base_url),
+        )
+        if server_settings.openai_base_url
+        else AsyncOpenAI(api_key=server_settings.openai_api_key)
+    )
+
+    sampling_handler = OpenAISamplingHandler(
+        default_model=server_settings.openai_default_model,  # type: ignore
+        client=client,
+    )
+elif server_settings.fallback_behavior:
+    logger.warning(
+        "Sampling fallback behavior configured without sampling handler; ignoring."
+    )
+
+sampling_handler_behavior = (
+    server_settings.fallback_behavior if sampling_handler else None
+)
+
 mcp = FastMCP(
     name="powersearch-mcp",
     instructions=(
@@ -50,16 +82,18 @@ mcp = FastMCP(
     ),
     version=__version__,
     tasks=True,
+    sampling_handler=sampling_handler,
+    sampling_handler_behavior=sampling_handler_behavior,
 )
 
 
 mcp.add_middleware(
     LoggingMiddleware(
         log_level=server_settings.log_level_value(),
-        include_payloads=server_settings.include_payloads,
-        include_payload_length=server_settings.include_payload_length,
-        estimate_payload_tokens=server_settings.estimate_payload_tokens,
-        max_payload_length=server_settings.max_payload_length,
+        include_payloads=server_settings.log_payloads,
+        include_payload_length=True,
+        estimate_payload_tokens=server_settings.log_estimate_tokens,
+        max_payload_length=server_settings.log_max_payload_length,
     )
 )
 
@@ -256,6 +290,22 @@ async def summarize_search(  # noqa: PLR0913
     ] = None,
 ) -> SearchSummary:
     """Summarize search results via MCP sampling with citations preserved."""
+
+    has_sampling = ctx.session.check_client_capability(
+        capability=ClientCapabilities(sampling=SamplingCapability())
+    )
+    has_tools_capability = ctx.session.check_client_capability(
+        capability=ClientCapabilities(
+            sampling=SamplingCapability(tools=SamplingToolsCapability())
+        )
+    )
+
+    if sampling_handler is None and (
+        not has_sampling or not has_tools_capability
+    ):
+        raise RuntimeError(
+            "Client does not support sampling capabilities required for summarization."
+        )
 
     map_reduce_flag = bool(map_reduce)
 

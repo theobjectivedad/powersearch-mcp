@@ -133,7 +133,7 @@
                     "module": "fastmcp.cli",
                     "args": [
                         "run",
-                        "fastmcp-http.json",
+                        "example-configs/fastmcp-http.json",
                         "--skip-source",
                         "--skip-env"
                     ],

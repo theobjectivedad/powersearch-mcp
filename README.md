@@ -24,6 +24,7 @@ PowerSearch MCP helps AI agents search and retrieve content from the public web 
 - ✅ Authentication support for both JWT and opaque tokens
 - ✅ Authorization support for embedded [Eunomia](https://github.com/whataboutyou-ai/eunomia) policies
 - ✅ Auto summarization of search results via [MCP sampling](https://modelcontextprotocol.io/specification/2025-06-18/client/sampling)
+- ✅ Optional server-side fallback for clients that don't support MCP sampling
 - 🗓️ (Future) Client selectable synchronous (current behavior) or asynchronous [SEP-1686](https://modelcontextprotocol.io/specification/2025-11-25/basic/utilities/tasks) execution for search / fetch tools
 - 🗓️ (Future) Containerization, publish public image
 - 🗓️ (Future) Prometheus metrics exporter
