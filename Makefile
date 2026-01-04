@@ -13,6 +13,8 @@ WORKSPACE_DIR:=$(CURDIR)
 SRC_DIR:=$(WORKSPACE_DIR)/src
 VENV_DIR:=$(WORKSPACE_DIR)/.venv
 PYTHON_VERSION:=3.13
+LOCAL_IMAGE_NAME?=powersearch-mcp
+LOCAL_IMAGE_TAG?=local
 
 .PHONY: default
 default: help
@@ -115,3 +117,14 @@ clean:
 .PHONY: build
 build:
 	uv build
+
+################################################################################
+# Local container targets
+################################################################################
+
+.PHONY: image-build
+image-build:
+	docker build \
+		--tag=$(LOCAL_IMAGE_NAME):$(LOCAL_IMAGE_TAG) \
+		--file=Dockerfile . && \
+	echo "INFO Build successful: $(LOCAL_IMAGE_NAME):$(LOCAL_IMAGE_TAG)"
