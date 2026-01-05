@@ -19,8 +19,9 @@ env:
   IMAGE_NAME: ${{ vars.DOCKERHUB_USERNAME }}/powersearch-mcp
 
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
+    environment: pypi
 
     steps:
       - name: Checkout
