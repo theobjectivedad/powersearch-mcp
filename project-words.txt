@@ -4,6 +4,7 @@ asgi
 ASGI
 autouse
 bing
+browserforge
 camoufox
 Camoufox
 cffi
@@ -21,6 +22,7 @@ fastmcp
 geoip
 github
 httpx
+importlib
 kubernetes
 modelcontextprotocol
 msgspec
@@ -32,6 +34,7 @@ numpy
 oidc
 OOTB
 OPENAI
+pathlib
 pipefail
 powersearch
 POWERSEARCH
@@ -42,6 +45,8 @@ pypi
 pyproject
 pytest
 pytests
+PYTHONDONTWRITEBYTECODE
+PYTHONUNBUFFERED
 REMOTEAUTHPROVIDER
 safesearch
 scrapling

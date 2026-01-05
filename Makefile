@@ -13,6 +13,8 @@ WORKSPACE_DIR:=$(CURDIR)
 SRC_DIR:=$(WORKSPACE_DIR)/src
 VENV_DIR:=$(WORKSPACE_DIR)/.venv
 PYTHON_VERSION:=3.13
+LOCAL_IMAGE_NAME?=powersearch-mcp
+LOCAL_IMAGE_TAG?=local
 
 .PHONY: default
 default: help
@@ -48,6 +50,7 @@ init:
 		--python $(PYTHON_VERSION) \
 		$(VENV_DIR)
 	$(MAKE) sync
+	uv run playwright install
 	uv run pre-commit install
 
 .PHONY: sync
@@ -94,11 +97,19 @@ run: run-stdio
 
 .PHONY: run-stdio
 run-stdio:
-	uv run fastmcp run $(CURDIR)/example-configs/fastmcp.json --skip-source --skip-env
+	uv run fastmcp run \
+    	$(CURDIR)/src/powersearch_mcp/app.py \
+    	--transport=stdio \
+    	--skip-source \
+    	--skip-env
 
 .PHONY: run-http
 run-http:
-	uv run fastmcp run $(CURDIR)/example-configs/fastmcp-http.json --skip-source --skip-env
+	uv run fastmcp run \
+    	$(CURDIR)/src/powersearch_mcp/app.py \
+    	--transport=streamable-http \
+    	--skip-source \
+    	--skip-env
 
 .PHONY: run-client
 run-client:
@@ -115,3 +126,14 @@ clean:
 .PHONY: build
 build:
 	uv build
+
+################################################################################
+# Local container targets
+################################################################################
+
+.PHONY: image-build
+image-build:
+	docker build \
+		--tag=$(LOCAL_IMAGE_NAME):$(LOCAL_IMAGE_TAG) \
+		--file=Dockerfile . && \
+	echo "INFO Build successful: $(LOCAL_IMAGE_NAME):$(LOCAL_IMAGE_TAG)"
