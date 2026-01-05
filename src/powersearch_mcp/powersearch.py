@@ -280,8 +280,7 @@ async def _fetch_url(
         resp = await StealthyFetcher.async_fetch(
             url=url,
             timeout=fetch_timeout_ms,
-            os_randomize=True,
-            block_images=True,
+            disable_resources=True,
         )
     except Exception as exc:  # pragma: no cover - exercised in live test
         if ctx:

@@ -97,11 +97,19 @@ run: run-stdio
 
 .PHONY: run-stdio
 run-stdio:
-	uv run fastmcp run $(CURDIR)/example-configs/fastmcp.json --skip-source --skip-env
+	uv run fastmcp run \
+    	$(CURDIR)/src/powersearch_mcp/app.py \
+    	--transport=stdio \
+    	--skip-source \
+    	--skip-env
 
 .PHONY: run-http
 run-http:
-	uv run fastmcp run $(CURDIR)/example-configs/fastmcp-http.json --skip-source --skip-env
+	uv run fastmcp run \
+    	$(CURDIR)/src/powersearch_mcp/app.py \
+    	--transport=streamable-http \
+    	--skip-source \
+    	--skip-env
 
 .PHONY: run-client
 run-client:
