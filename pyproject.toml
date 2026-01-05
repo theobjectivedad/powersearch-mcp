@@ -1,4 +1,5 @@
 [project]
+
 name = "powersearch-mcp"
 dynamic = ["version"]
 description = "PowerSearch MCP helps AI agents search and retrieve content from the public web with fewer broken fetches and clean, AI-friendly outputs ready to cite."
@@ -7,23 +8,6 @@ keywords = ["mcp", "search", "web", "retrieval", "agents", "scraping"]
 readme = "README.md"
 license = { file = "LICENSE" }
 requires-python = ">=3.13"
-dependencies = [
-    "camoufox[geoip]>=0.4.11,<1",
-    "curl-cffi>=0.14.0,<1",
-    "eunomia-mcp>=0.3.10",
-    "fastmcp[openai]>=2.14,<3",
-    "httpx[http2]>=0.28.1,<1",
-    "mcp[cli]>=1.12.1,<2",
-    "msgspec>=0.20.0,<1",
-    "numpy>=2.4.0,<3",
-    "py-key-value-aio[disk,memory,redis]>=0.3.0,<1",
-    "pydantic-settings>=2.7.0,<3",
-    "pydantic>=2.12.5,<3",
-    "scrapling>=0.3.12,<1",
-    "trafilatura>=2.0.0,<3",
-    "truststore>=0.10.4,<1",
-    "uvicorn>=0.40.0,<1",
-]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
@@ -35,6 +19,23 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Topic :: Internet :: WWW/HTTP :: Indexing/Search",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+dependencies = [
+    "curl-cffi>=0.14.0,<1",
+    "eunomia-mcp>=0.3.10",
+    "fastmcp[openai]>=2.14,<3",
+    "httpx[http2]>=0.28.1,<1",
+    "mcp[cli]>=1.12.1,<2",
+    "msgspec>=0.20.0,<1",
+    "numpy>=2.4.0,<3",
+    "py-key-value-aio[disk,memory,redis]>=0.3.0,<1",
+    "pydantic-settings>=2.7.0,<3",
+    "pydantic>=2.12.5,<3",
+    "scrapling[all]>=0.3.14,<2",
+    "trafilatura>=2.0.0,<3",
+    "truststore>=0.10.4,<1",
+    "uvicorn>=0.40.0,<1",
 ]
 
 [project.urls]
@@ -57,7 +58,15 @@ version-file = "src/powersearch_mcp/_version.py"
 packages = ["src/powersearch_mcp"]
 
 [tool.hatch.build.targets.sdist]
-include = ["README.md", "LICENSE", "CONTRIBUTING.md", "SECURITY.md"]
+include = [
+    "pyproject.toml",
+    "README.md",
+    "LICENSE",
+    "CONTRIBUTING.md",
+    "SECURITY.md",
+    "src/powersearch_mcp/**",
+]
+
 
 [dependency-groups]
 dev = [

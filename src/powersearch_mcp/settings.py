@@ -28,7 +28,7 @@ if TYPE_CHECKING:  # pragma: no cover - type checking only
 _env_file_setting = os.getenv("POWERSEARCH_ENV_FILE", ".env")
 
 DEFAULT_BASE_URL: HttpUrl = TypeAdapter(HttpUrl).validate_python(
-    "http://127.0.0.1:9876"
+    "http://127.0.0.1:8099"
 )
 
 
@@ -36,10 +36,13 @@ class PowerSearchSettings(BaseSettings):
     """Runtime configuration for Power Search sourced from environment."""
 
     model_config = SettingsConfigDict(
-        env_prefix="POWERSEARCH_",
-        env_file=_env_file_setting,
         env_file_encoding="utf-8",
+        env_file=_env_file_setting,
+        env_nested_delimiter="__",
+        env_prefix="POWERSEARCH_",
         extra="ignore",
+        nested_model_default_partial_update=True,
+        validate_assignment=True,
     )
 
     base_url: HttpUrl = Field(

@@ -1,19 +1,17 @@
 #!/bin/sh
 set -eu
 
-transport=${TRANSPORT:-streamable-http}
-host=${FASTMCP_HOST:-0.0.0.0}
-port=${FASTMCP_PORT:-8099}
-path_prefix=${FASTMCP_PATH:-/mcp}
+# Derive the PowerSearch MCP search path
+app_path=$(python - <<'PY'
+import importlib.util
+import pathlib
 
-# Allow extra CLI flags via FASTMCP_EXTRA_ARGS and runtime args.
-set -- "$@"
-if [ -n "${FASTMCP_EXTRA_ARGS:-}" ]; then
-    set -- ${FASTMCP_EXTRA_ARGS} "$@"
-fi
+spec = importlib.util.find_spec("powersearch_mcp.app")
+if spec is None or spec.origin is None:
+    raise SystemExit("powersearch_mcp.app not found in site-packages")
 
-if [ "$transport" = "stdio" ]; then
-    exec fastmcp run powersearch_mcp.app:mcp --skip-env --skip-source "$@"
-fi
+print(pathlib.Path(spec.origin).resolve())
+PY
+)
 
-exec fastmcp run powersearch_mcp.app:mcp --skip-env --skip-source --transport "$transport" --host "$host" --port "$port" --path "$path_prefix" "$@"
+exec fastmcp run "$app_path" --skip-env --skip-source "$@"

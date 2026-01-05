@@ -50,6 +50,7 @@ init:
 		--python $(PYTHON_VERSION) \
 		$(VENV_DIR)
 	$(MAKE) sync
+	uv run playwright install
 	uv run pre-commit install
 
 .PHONY: sync
