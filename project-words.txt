@@ -5,9 +5,12 @@ ASGI
 autouse
 bing
 browserforge
+buildx
+Buildx
 camoufox
 Camoufox
 cffi
+DOCKERHUB
 dotenv
 duckduckgo
 duplcheck
@@ -24,6 +27,7 @@ github
 httpx
 importlib
 kubernetes
+linux
 modelcontextprotocol
 msgspec
 mypy
